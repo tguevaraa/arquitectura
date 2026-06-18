@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Medical Management</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background-color: #f8f9fa; }
+        header { background: #1a73e8; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        main { padding: 2rem; max-width: 1000px; margin: 0 auto; }
+        .section { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 2rem; }
+        h2 { border-bottom: 2px solid #f0f2f5; padding-bottom: 0.5rem; color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #eee; }
+        .btn-logout { background: #d93025; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; }
+        .form-book { display: grid; gap: 1rem; max-width: 400px; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Medical System</h1>
+        <button class="btn-logout" onclick="api.logout()">Logout</button>
+    </header>
+
+    <main>
+        <div class="section" id="bookingSection">
+            <h2>Book an Appointment</h2>
+            <form class="form-book" id="bookForm">
+                <select id="doctorSelect" required>
+                    <option value="">Select a Doctor</option>
+                </select>
+                <input type="datetime-local" id="appDate" required>
+                <textarea id="appNotes" placeholder="Notes (optional)"></textarea>
+                <button type="submit" style="background: #34a853; color: white; border: none; padding: 0.75rem; border-radius: 4px; cursor: pointer;">Book Now</button>
+            </form>
+        </div>
+
+        <div class="section">
+            <h2>My Appointments</h2>
+            <table id="appointmentsTable">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Doctor/Patient ID</th>
+                        <th>Status</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody id="appointmentsList">
+                    <!-- Loaded dynamically -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script>
+        if (!localStorage.getItem('token')) window.location.href = 'index.html';
+
+        async function init() {
+            // Load Doctors
+            const doctors = await api.getDoctors();
+            const select = document.getElementById('doctorSelect');
+            doctors.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d.id;
+                opt.textContent = `${d.user.full_name} - ${d.specialty}`;
+                select.appendChild(opt);
+            });
+
+            // Load Appointments
+            loadAppointments();
+        }
+
+        async function loadAppointments() {
+            const apps = await api.getAppointments();
+            const list = document.getElementById('appointmentsList');
+            list.innerHTML = '';
+            apps.forEach(a => {
+                const row = `<tr>
+                    <td>${new Date(a.appointment_datetime).toLocaleString()}</td>
+                    <td>${a.doctor_id}</td>
+                    <td>${a.status}</td>
+                    <td>${a.notes || '-'}</td>
+                </tr>`;
+                list.innerHTML += row;
+            });
+        }
+
+        document.getElementById('bookForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const doctorId = document.getElementById('doctorSelect').value;
+            const datetime = document.getElementById('appDate').value;
+            const notes = document.getElementById('appNotes').value;
+
+            const res = await api.bookAppointment(doctorId, datetime, notes);
+            if (res.id) {
+                alert('Appointment booked successfully!');
+                loadAppointments();
+            } else {
+                alert('Error booking: ' + (res.detail || 'Unknown error'));
+            }
+        };
+
+        init();
+    </script>
+</body>
+</html>
