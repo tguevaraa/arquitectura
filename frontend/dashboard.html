@@ -1,108 +1,1614 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Medical Management</title>
+    <title>Panel de Atenciones - UMEDIC</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f8f9fa; }
-        header { background: #1a73e8; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
-        main { padding: 2rem; max-width: 1000px; margin: 0 auto; }
-        .section { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 2rem; }
-        h2 { border-bottom: 2px solid #f0f2f5; padding-bottom: 0.5rem; color: #333; }
-        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #eee; }
-        .btn-logout { background: #d93025; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; }
-        .form-book { display: grid; gap: 1rem; max-width: 400px; }
+        :root {
+            --primary:      #1a73e8;
+            --primary-dark: #1557b0;
+            --success:      #34a853;
+            --warning:      #f9ab00;
+            --danger:       #ea4335;
+            --bg:           #f1f3f4;
+            --card:         #ffffff;
+            --border:       #e0e0e0;
+            --text:         #202124;
+            --muted:        #5f6368;
+            --shadow:       0 1px 3px rgba(0,0,0,.12), 0 1px 2px rgba(0,0,0,.08);
+            --shadow-lg:    0 4px 20px rgba(0,0,0,.15);
+            --radius:       8px;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 14px;
+            min-height: 100vh;
+        }
+
+        /* ── Header ── */
+        .app-header {
+            background: var(--primary);
+            color: #fff;
+            height: 56px;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 200;
+            box-shadow: 0 2px 8px rgba(0,0,0,.2);
+        }
+        .brand { font-size: 15px; font-weight: 700; letter-spacing: .2px; display: flex; align-items: center; gap: 10px; }
+        .brand-sub { font-size: 12px; font-weight: 400; opacity: .75; }
+        .header-right { display: flex; align-items: center; gap: 14px; }
+        .user-chip {
+            display: flex; align-items: center; gap: 8px;
+            background: rgba(255,255,255,.15); border-radius: 20px;
+            padding: 4px 14px 4px 4px;
+        }
+        .user-avatar {
+            width: 30px; height: 30px; border-radius: 50%;
+            background: rgba(255,255,255,.25);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 13px;
+        }
+        .user-name { font-size: 13px; }
+        .btn-logout {
+            background: rgba(255,255,255,.15); border: none; color: #fff;
+            padding: 6px 16px; border-radius: 6px; cursor: pointer;
+            font-size: 13px; font-weight: 500; transition: background .2s;
+        }
+        .btn-logout:hover { background: rgba(255,255,255,.28); }
+
+        /* ── Main ── */
+        main { padding: 20px 24px; max-width: 1500px; margin: 0 auto; }
+
+        /* ── Toolbar ── */
+        .toolbar {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        .search-box {
+            display: flex; align-items: center; gap: 8px;
+            border: 1px solid var(--border); border-radius: 6px;
+            padding: 7px 12px; flex: 1; min-width: 200px; max-width: 300px;
+            transition: border .2s;
+        }
+        .search-box:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(26,115,232,.12); }
+        .search-box input { border: none; outline: none; width: 100%; font-size: 14px; background: transparent; }
+        .search-icon { color: var(--muted); font-size: 15px; }
+
+        .filter-group { display: flex; align-items: center; gap: 8px; }
+        .filter-select {
+            border: 1px solid var(--border); border-radius: 6px;
+            padding: 7px 10px; font-size: 13px; background: #fff;
+            cursor: pointer; outline: none; color: var(--text);
+        }
+        .filter-btn {
+            border: 1px solid var(--border); border-radius: 6px;
+            padding: 7px 14px; font-size: 13px; background: #fff;
+            cursor: pointer; color: var(--text); transition: all .2s;
+            font-weight: 500;
+        }
+        .filter-btn.active, .filter-btn:hover {
+            background: var(--primary); color: #fff; border-color: var(--primary);
+        }
+
+        .toolbar-actions { display: flex; gap: 8px; margin-left: auto; align-items: center; }
+
+        .btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 7px 16px; border-radius: 6px; border: none;
+            font-size: 13px; font-weight: 600; cursor: pointer;
+            transition: all .2s; white-space: nowrap;
+        }
+        .btn-primary  { background: var(--primary); color: #fff; }
+        .btn-primary:hover  { background: var(--primary-dark); }
+        .btn-secondary { background: #fff; color: var(--text); border: 1px solid var(--border); font-weight: 500; }
+        .btn-secondary:hover { background: #f1f3f4; }
+        .btn-success  { background: var(--success); color: #fff; }
+        .btn-success:hover  { filter: brightness(.9); }
+        .btn-sm { padding: 5px 12px; font-size: 12px; }
+
+        /* ── Tabla ── */
+        .table-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: calc(100vh - 245px);
+            overflow-y: auto;
+        }
+        table { width: 100%; border-collapse: collapse; min-width: 1300px; }
+        thead th {
+            background: #f8f9fa;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .6px;
+            padding: 10px 12px;
+            text-align: left;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-bottom: 2px solid var(--border);
+            user-select: none;
+        }
+        tbody tr { transition: background .12s; }
+        tbody tr:hover { background: #e8f0fe; }
+        tbody td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+        tbody tr:last-child td { border-bottom: none; }
+
+        /* ── Badges ── */
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .3px;
+        }
+        .badge-agendada  { background: #e8f0fe; color: #1a73e8; }
+        .badge-pendiente { background: #fef7e0; color: #b06000; border: 1px solid #fce8a4; }
+        .badge-cerrada   { background: #e6f4ea; color: #1e8e3e; }
+        .badge-cancelada { background: #fce8e6; color: #c5221f; }
+
+        /* ── Botones de acción ── */
+        .action-btn {
+            background: none; border: none; cursor: pointer;
+            padding: 5px 7px; border-radius: 5px;
+            color: var(--muted); transition: all .15s; font-size: 15px;
+            line-height: 1;
+        }
+        .action-btn:hover { background: #e8f0fe; color: var(--primary); }
+        .action-btn.cancel:hover { background: #fce8e6; color: var(--danger); }
+        .note-icon { color: var(--warning); cursor: help; }
+
+        /* ── Paginación ── */
+        .pagination {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 16px; border-top: 1px solid var(--border);
+        }
+        .pag-info { color: var(--muted); font-size: 13px; }
+        .pag-controls { display: flex; gap: 4px; }
+        .page-btn {
+            min-width: 32px; height: 32px; border: 1px solid var(--border);
+            background: #fff; border-radius: 5px; cursor: pointer;
+            font-size: 13px; display: flex; align-items: center; justify-content: center;
+            transition: all .15s; padding: 0 6px;
+        }
+        .page-btn:hover, .page-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .page-btn:disabled { opacity: .35; cursor: not-allowed; pointer-events: none; }
+
+        /* ── Modales ── */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,.45); z-index: 1000;
+            align-items: center; justify-content: center;
+            padding: 20px; backdrop-filter: blur(3px);
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: #fff; border-radius: 12px;
+            box-shadow: 0 24px 64px rgba(0,0,0,.25);
+            width: 100%; max-height: 92vh;
+            display: flex; flex-direction: column;
+            animation: modalIn .2s ease;
+        }
+        @keyframes modalIn {
+            from { opacity: 0; transform: translateY(-16px) scale(.97); }
+            to   { opacity: 1; transform: none; }
+        }
+        .modal-md { max-width: 600px; }
+        .modal-lg { max-width: 880px; }
+        .modal-xl { max-width: 1040px; }
+
+        .modal-header {
+            padding: 18px 24px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            background: #fafafa; border-radius: 12px 12px 0 0;
+            flex-shrink: 0;
+        }
+        .modal-header h2 { font-size: 16px; font-weight: 700; }
+        .modal-close {
+            background: none; border: none; font-size: 18px;
+            cursor: pointer; color: var(--muted); width: 32px; height: 32px;
+            border-radius: 5px; display: flex; align-items: center; justify-content: center;
+            transition: all .15s;
+        }
+        .modal-close:hover { background: #f1f3f4; color: var(--text); }
+        .modal-body { padding: 24px; overflow-y: auto; flex: 1; }
+        .modal-footer {
+            padding: 16px 24px; border-top: 1px solid var(--border);
+            display: flex; gap: 10px; justify-content: flex-end;
+            background: #fafafa; border-radius: 0 0 12px 12px; flex-shrink: 0;
+        }
+
+        /* ── Formularios ── */
+        .form-section {
+            background: #f8f9fa; border-radius: var(--radius);
+            padding: 16px; margin-bottom: 16px;
+        }
+        .form-section:last-child { margin-bottom: 0; }
+        .section-title {
+            font-size: 11px; font-weight: 700; color: var(--muted);
+            text-transform: uppercase; letter-spacing: .6px; margin-bottom: 14px;
+        }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .form-grid .span2 { grid-column: 1 / -1; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        .form-group label { font-size: 12px; font-weight: 600; color: var(--muted); }
+        .req { color: var(--danger); }
+        .form-control {
+            border: 1px solid var(--border); border-radius: 6px;
+            padding: 8px 12px; font-size: 14px; outline: none;
+            transition: border .2s; width: 100%; background: #fff;
+            color: var(--text);
+        }
+        .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(26,115,232,.12); }
+        .form-control.invalid { border-color: var(--danger); background: #fff5f5; }
+        .form-control[readonly] { background: #f1f3f4; color: var(--muted); }
+        textarea.form-control { resize: vertical; }
+
+        /* ── Tabs ── */
+        .tabs {
+            display: flex; border-bottom: 2px solid var(--border);
+            margin-bottom: 20px; gap: 0; overflow-x: auto;
+        }
+        .tab-btn {
+            padding: 10px 18px; border: none; background: none;
+            cursor: pointer; font-size: 13px; color: var(--muted);
+            white-space: nowrap; border-bottom: 2px solid transparent;
+            margin-bottom: -2px; transition: all .2s; font-weight: 500;
+        }
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 700; }
+        .tab-btn:hover:not(.active) { color: var(--text); background: #f1f3f4; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* ── Toggle switches ── */
+        .toggles-block { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 2px; }
+        .toggle-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 7px 0;
+        }
+        .toggle-label { font-size: 13px; }
+        .toggle { position: relative; width: 42px; height: 24px; flex-shrink: 0; }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .toggle-track {
+            position: absolute; inset: 0; background: #ccc; border-radius: 24px;
+            cursor: pointer; transition: background .25s;
+        }
+        .toggle-track::before {
+            content: ''; position: absolute; width: 18px; height: 18px;
+            left: 3px; top: 3px; background: #fff; border-radius: 50%;
+            transition: transform .25s; box-shadow: 0 1px 3px rgba(0,0,0,.2);
+        }
+        .toggle input:checked + .toggle-track { background: var(--primary); }
+        .toggle input:checked + .toggle-track::before { transform: translateX(18px); }
+
+        /* ── Foto de perfil ── */
+        .photo-drop {
+            border: 2px dashed var(--border); border-radius: 10px;
+            padding: 24px 16px; text-align: center; cursor: pointer;
+            color: var(--muted); transition: all .2s; background: #fafafa;
+        }
+        .photo-drop:hover { border-color: var(--primary); color: var(--primary); background: #e8f0fe; }
+        .photo-preview img {
+            width: 100px; height: 100px; border-radius: 50%;
+            object-fit: cover; border: 3px solid var(--border);
+        }
+        .photo-hint { font-size: 11px; margin-top: 6px; opacity: .7; }
+
+        /* ── Column dropdown ── */
+        .col-dropdown { position: relative; }
+        .col-menu {
+            display: none; position: absolute; right: 0; top: 40px;
+            background: #fff; border: 1px solid var(--border); border-radius: 8px;
+            box-shadow: var(--shadow-lg); z-index: 500; padding: 8px;
+            min-width: 190px;
+        }
+        .col-menu.open { display: block; }
+        .col-item {
+            display: flex; align-items: center; gap: 8px;
+            padding: 7px 10px; border-radius: 5px; cursor: pointer;
+            font-size: 13px; user-select: none;
+        }
+        .col-item:hover { background: #f1f3f4; }
+        .col-item input[type=checkbox] { accent-color: var(--primary); width: 14px; height: 14px; cursor: pointer; }
+
+        /* ── Estado vacío ── */
+        .empty-state {
+            text-align: center; padding: 52px 24px; color: var(--muted);
+        }
+        .empty-icon { font-size: 44px; margin-bottom: 14px; }
+        .empty-state p { font-size: 14px; }
+
+        /* ── Spinner ── */
+        .spinner {
+            display: inline-block; width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,.4); border-top-color: #fff;
+            border-radius: 50%; animation: spin .7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+            color: #fff; padding: 12px 20px; border-radius: 8px;
+            box-shadow: var(--shadow-lg); font-size: 14px; max-width: 340px;
+            display: none; animation: toastIn .25s ease;
+        }
+        .toast.show { display: block; }
+        .toast.success { background: var(--success); }
+        .toast.error   { background: var(--danger); }
+        .toast.info    { background: #333; }
+        @keyframes toastIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+        /* ── Responsive ── */
+        @media (max-width: 700px) {
+            .form-grid { grid-template-columns: 1fr; }
+            main { padding: 12px; }
+            .toolbar { gap: 8px; }
+        }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Medical System</h1>
-        <button class="btn-logout" onclick="api.logout()">Logout</button>
-    </header>
 
-    <main>
-        <div class="section" id="bookingSection">
-            <h2>Book an Appointment</h2>
-            <form class="form-book" id="bookForm">
-                <select id="doctorSelect" required>
-                    <option value="">Select a Doctor</option>
-                </select>
-                <input type="datetime-local" id="appDate" required>
-                <textarea id="appNotes" placeholder="Notes (optional)"></textarea>
-                <button type="submit" style="background: #34a853; color: white; border: none; padding: 0.75rem; border-radius: 4px; cursor: pointer;">Book Now</button>
-            </form>
+<!-- ====== HEADER ====== -->
+<header class="app-header">
+    <div class="brand">
+        <span style="font-size:20px">&#9877;</span>
+        UMEDIC
+        <span class="brand-sub">UNIDAD MEDICA CENTRAL &mdash; Panel de Atenciones</span>
+    </div>
+    <div class="header-right">
+        <div class="user-chip">
+            <div class="user-avatar" id="userAvatar">U</div>
+            <span class="user-name" id="userName">Cargando...</span>
+        </div>
+        <button class="btn-logout" onclick="api.logout()">Cerrar sesi&oacute;n</button>
+    </div>
+</header>
+
+<!-- ====== MAIN ====== -->
+<main>
+
+    <!-- Barra de herramientas -->
+    <div class="toolbar">
+        <div class="search-box">
+            <span class="search-icon">&#128269;</span>
+            <input type="text" id="searchInput" placeholder="Buscar por m&eacute;dico, motivo, ID...">
         </div>
 
-        <div class="section">
-            <h2>My Appointments</h2>
-            <table id="appointmentsTable">
+        <div class="filter-group">
+            <select class="filter-select" id="statusFilter">
+                <option value="">Todos los estados</option>
+                <option value="scheduled">Agendada</option>
+                <option value="completed">Cerrada</option>
+                <option value="cancelled">Cancelada</option>
+            </select>
+            <button class="filter-btn active" id="btnHoy"   onclick="setFiltroFecha('hoy')">Hoy</button>
+            <button class="filter-btn"        id="btnTodas" onclick="setFiltroFecha('todas')">Todas</button>
+        </div>
+
+        <div class="toolbar-actions">
+            <button class="btn btn-success" onclick="abrirModalNuevoPaciente()">
+                &#43; Nuevo Paciente
+            </button>
+            <button class="btn btn-primary" onclick="abrirModalNueva()">
+                &#43; Nueva Atenci&oacute;n
+            </button>
+            <button class="btn btn-secondary" onclick="exportarExcel()">
+                &#128202; Exportar Excel
+            </button>
+            <div class="col-dropdown">
+                <button class="btn btn-secondary" id="btnColumnas" onclick="toggleColMenu()">
+                    &#9783; Columnas
+                </button>
+                <div class="col-menu" id="colMenu"><!-- JS --></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de datos -->
+    <div class="table-card">
+        <div class="table-wrapper">
+            <table id="mainTable">
                 <thead>
                     <tr>
-                        <th>Date & Time</th>
-                        <th>Doctor/Patient ID</th>
-                        <th>Status</th>
-                        <th>Notes</th>
+                        <th data-col="0">Atenci&oacute;n</th>
+                        <th data-col="1">Fecha</th>
+                        <th data-col="2">C&eacute;dula</th>
+                        <th data-col="3">Paciente</th>
+                        <th data-col="4">Edad</th>
+                        <th data-col="5">Sexo</th>
+                        <th data-col="6">Seguro</th>
+                        <th data-col="7">M&eacute;dico asignado</th>
+                        <th data-col="8">Motivo</th>
+                        <th data-col="9">Estado</th>
+                        <th data-col="10">Turno</th>
+                        <th data-col="11">Usuario</th>
+                        <th data-col="12">Nota</th>
+                        <th data-col="13">Hora cita</th>
+                        <th data-col="14">Total</th>
+                        <th data-col="15">Acciones</th>
                     </tr>
                 </thead>
-                <tbody id="appointmentsList">
-                    <!-- Loaded dynamically -->
+                <tbody id="tbodyAtenciones">
+                    <tr><td colspan="16">
+                        <div class="empty-state">
+                            <div style="width:36px;height:36px;border:3px solid #ddd;border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 14px;"></div>
+                            <p>Cargando atenciones...</p>
+                        </div>
+                    </td></tr>
                 </tbody>
             </table>
         </div>
-    </main>
+        <div class="pagination">
+            <div class="pag-info" id="pagInfo">&mdash;</div>
+            <div class="pag-controls" id="pagControls"></div>
+        </div>
+    </div>
+</main>
 
-    <script src="js/api.js"></script>
-    <script>
-        if (!localStorage.getItem('token')) window.location.href = 'index.html';
+<!-- Toast -->
+<div class="toast" id="toast"></div>
 
-        async function init() {
-            // Load Doctors
-            const doctors = await api.getDoctors();
-            const select = document.getElementById('doctorSelect');
-            doctors.forEach(d => {
-                const opt = document.createElement('option');
-                opt.value = d.id;
-                opt.textContent = `${d.user.full_name} - ${d.specialty}`;
-                select.appendChild(opt);
-            });
+<!-- ====================================================
+     MODAL 1: Nueva / Editar Atenci&oacute;n
+     ==================================================== -->
+<div class="modal-overlay" id="overlayAtencion">
+    <div class="modal modal-lg" role="dialog" aria-modal="true" aria-labelledby="tituloModal">
+        <div class="modal-header">
+            <h2 id="tituloModal">Nueva Atenci&oacute;n</h2>
+            <button class="modal-close" onclick="cerrar('overlayAtencion')" aria-label="Cerrar">&#x2715;</button>
+        </div>
+        <div class="modal-body">
+            <form id="formAtencion" novalidate>
 
-            // Load Appointments
-            loadAppointments();
+                <!-- Datos administrativos -->
+                <div class="form-section">
+                    <div class="section-title">Datos Administrativos</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Compa&ntilde;&iacute;a</label>
+                            <input class="form-control" type="text" value="UNIDAD MEDICA CENTRAL" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Sucursal</label>
+                            <input class="form-control" type="text" value="PRINCIPAL" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Estado <span class="req">*</span></label>
+                            <select class="form-control" id="fEstado">
+                                <option value="scheduled">Agendada</option>
+                                <option value="completed">Cerrada</option>
+                                <option value="cancelled">Cancelada</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Tipo de Consulta</label>
+                            <select class="form-control" id="fTipo">
+                                <option>General</option>
+                                <option>Especialidad</option>
+                                <option>Control</option>
+                                <option>Urgencia</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>N.&ordm; Autorizaci&oacute;n Factura</label>
+                            <input class="form-control" type="text" id="fAutorizacion" placeholder="Opcional">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Datos cl&iacute;nicos -->
+                <div class="form-section">
+                    <div class="section-title">Datos Cl&iacute;nicos y de Agendamiento</div>
+                    <div class="form-grid">
+                        <div class="form-group span2">
+                            <label>Paciente <span class="req">*</span></label>
+                            <div style="display:flex;gap:6px;">
+                                <select class="form-control" id="fPaciente" required>
+                                    <option value="">&#8212; Seleccionar paciente &#8212;</option>
+                                </select>
+                                <button type="button" class="btn btn-success btn-sm" style="flex-shrink:0;"
+                                        onclick="abrirModalNuevoPaciente(true)" title="Registrar nuevo paciente">&#43;</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Fecha <span class="req">*</span></label>
+                            <input class="form-control" type="date" id="fFecha" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Hora de cita <span class="req">*</span></label>
+                            <input class="form-control" type="time" id="fHora" required>
+                        </div>
+                        <div class="form-group span2">
+                            <label>M&eacute;dico <span class="req">*</span></label>
+                            <select class="form-control" id="fMedico" required>
+                                <option value="">&#8212; Seleccionar m&eacute;dico &#8212;</option>
+                            </select>
+                        </div>
+                        <div class="form-group span2">
+                            <label>Motivo de la consulta <span class="req">*</span></label>
+                            <textarea class="form-control" id="fMotivo" rows="3"
+                                placeholder="Describa el motivo de la consulta..." required></textarea>
+                        </div>
+                        <div class="form-group span2">
+                            <label>Nota / Observaciones</label>
+                            <textarea class="form-control" id="fNota" rows="2"
+                                placeholder="Observaciones adicionales (Ej: el paciente lleg&oacute; tarde)..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="cerrar('overlayAtencion')">Cancelar</button>
+            <button class="btn btn-primary" id="btnGuardar" onclick="guardarAtencion()">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<!-- ====================================================
+     MODAL 2: Informaci&oacute;n del Paciente
+     ==================================================== -->
+<div class="modal-overlay" id="overlayPaciente">
+    <div class="modal modal-xl" role="dialog" aria-modal="true">
+        <div class="modal-header">
+            <h2>Informaci&oacute;n General del Paciente</h2>
+            <button class="modal-close" onclick="cerrar('overlayPaciente')" aria-label="Cerrar">&#x2715;</button>
+        </div>
+        <div class="modal-body">
+
+            <!-- Tabs -->
+            <div class="tabs" role="tablist">
+                <button class="tab-btn active" onclick="tab(this,'tDatos')">Datos Personales</button>
+                <button class="tab-btn" onclick="tab(this,'tValidaciones')">Validaciones</button>
+                <button class="tab-btn" onclick="tab(this,'tAseguradoras')">Aseguradoras</button>
+                <button class="tab-btn" onclick="tab(this,'tRepresentante')">Representante</button>
+                <button class="tab-btn" onclick="tab(this,'tAntecedentes')">Antecedentes y Alergias</button>
+                <button class="tab-btn" onclick="tab(this,'tUbicaciones')">Ubicaciones</button>
+                <button class="tab-btn" onclick="tab(this,'tFirmas')">Firmas asistencia</button>
+                <button class="tab-btn" onclick="tab(this,'tArchivos')">Archivos</button>
+            </div>
+
+            <!-- Tab: Datos Personales -->
+            <div class="tab-panel active" id="tDatos">
+                <div style="display:grid;grid-template-columns:1fr 190px;gap:20px;align-items:start;">
+                    <div>
+                        <!-- Bloque 1: Identidad y Contacto -->
+                        <div class="form-section">
+                            <div class="section-title">Identidad y Contacto</div>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>C&eacute;dula</label>
+                                    <div style="display:flex;gap:6px;">
+                                        <input class="form-control" type="text" id="pCedula" placeholder="0000000000" maxlength="13">
+                                        <button class="btn btn-secondary btn-sm" title="Validar c&eacute;dula" style="flex-shrink:0;">&#10003;</button>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Fecha de Nacimiento</label>
+                                    <input class="form-control" type="date" id="pFechaNac" oninput="calcEdad()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Apellido Paterno</label>
+                                    <input class="form-control" type="text" id="pApP">
+                                </div>
+                                <div class="form-group">
+                                    <label>Apellido Materno</label>
+                                    <input class="form-control" type="text" id="pApM">
+                                </div>
+                                <div class="form-group">
+                                    <label>Primer Nombre</label>
+                                    <input class="form-control" type="text" id="pNom1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Segundo Nombre</label>
+                                    <input class="form-control" type="text" id="pNom2">
+                                </div>
+                                <div class="form-group">
+                                    <label>Edad</label>
+                                    <input class="form-control" type="text" id="pEdad" readonly placeholder="Calculada autom&aacute;ticamente">
+                                </div>
+                                <div class="form-group">
+                                    <label>Sexo</label>
+                                    <select class="form-control" id="pSexo">
+                                        <option value="">&#8212; Seleccionar &#8212;</option>
+                                        <option value="M">Masculino (M)</option>
+                                        <option value="F">Femenino (F)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Celular</label>
+                                    <input class="form-control" type="tel" id="pCelular" placeholder="09XXXXXXXX">
+                                </div>
+                                <div class="form-group">
+                                    <label>Tel&eacute;fono fijo</label>
+                                    <input class="form-control" type="tel" id="pTelFijo" placeholder="042XXXXXX">
+                                </div>
+                                <div class="form-group span2">
+                                    <label>Correo electr&oacute;nico</label>
+                                    <input class="form-control" type="email" id="pEmail">
+                                </div>
+                                <div class="form-group span2">
+                                    <label>Direcci&oacute;n</label>
+                                    <textarea class="form-control" id="pDireccion" rows="2"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bloque 2: Ubicaci&oacute;n Geogr&aacute;fica -->
+                        <div class="form-section">
+                            <div class="section-title">Ubicaci&oacute;n Geogr&aacute;fica</div>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Pa&iacute;s</label>
+                                    <select class="form-control" id="pPais">
+                                        <option>Ecuador</option>
+                                        <option>Colombia</option>
+                                        <option>Per&uacute;</option>
+                                        <option>Otro</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Provincia</label>
+                                    <select class="form-control" id="pProvincia">
+                                        <option value="">&#8212; Seleccionar &#8212;</option>
+                                        <option>Azuay</option><option>Bol&iacute;var</option>
+                                        <option>Ca&ntilde;ar</option><option>Carchi</option>
+                                        <option>Chimborazo</option><option>Cotopaxi</option>
+                                        <option>El Oro</option><option>Esmeraldas</option>
+                                        <option>Gal&aacute;pagos</option><option>Guayas</option>
+                                        <option>Imbabura</option><option>Loja</option>
+                                        <option>Los R&iacute;os</option><option>Manab&iacute;</option>
+                                        <option>Morona Santiago</option><option>Napo</option>
+                                        <option>Orellana</option><option>Pastaza</option>
+                                        <option>Pichincha</option><option>Santa Elena</option>
+                                        <option>Santo Domingo</option><option>Sucumb&iacute;os</option>
+                                        <option>Tungurahua</option><option>Zamora Chinchipe</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Cant&oacute;n</label>
+                                    <input class="form-control" type="text" id="pCanton">
+                                </div>
+                                <div class="form-group">
+                                    <label>Parroquia</label>
+                                    <input class="form-control" type="text" id="pParroquia">
+                                </div>
+                                <div class="form-group span2">
+                                    <label>Sector</label>
+                                    <input class="form-control" type="text" id="pSector">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bloque 3: Datos M&eacute;dicos y Administrativos -->
+                        <div class="form-section">
+                            <div class="section-title">Datos M&eacute;dicos y Administrativos</div>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Compa&ntilde;&iacute;a</label>
+                                    <input class="form-control" value="UNIDAD MEDICA CENTRAL" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label>H.C. (Historia Cl&iacute;nica)</label>
+                                    <input class="form-control" type="text" id="pHC" placeholder="N&uacute;mero HC">
+                                </div>
+                                <div class="form-group">
+                                    <label>HC IESS</label>
+                                    <input class="form-control" type="text" id="pHCIESS">
+                                </div>
+                                <div class="form-group">
+                                    <label>Grupo Sangu&iacute;neo</label>
+                                    <select class="form-control" id="pSangre">
+                                        <option value="">&#8212;</option>
+                                        <option>O+</option><option>O-</option>
+                                        <option>A+</option><option>A-</option>
+                                        <option>B+</option><option>B-</option>
+                                        <option>AB+</option><option>AB-</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Tipo de Seguro</label>
+                                    <select class="form-control" id="pSeguro">
+                                        <option value="">&#8212; Seleccionar &#8212;</option>
+                                        <option value="AG">AG &mdash; Autom&aacute;tico General</option>
+                                        <option value="SG">SG &mdash; Seguro General</option>
+                                        <option value="SV">SV &mdash; Seguro de Vida</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Empresa</label>
+                                    <input class="form-control" type="text" id="pEmpresa">
+                                </div>
+                                <div class="form-group span2">
+                                    <label>Ocupaci&oacute;n</label>
+                                    <input class="form-control" type="text" id="pOcupacion">
+                                </div>
+                            </div>
+
+                            <!-- Toggles -->
+                            <div class="toggles-block">
+                                <div class="toggle-row">
+                                    <span class="toggle-label">Discapacidad</span>
+                                    <label class="toggle">
+                                        <input type="checkbox" id="pDiscapacidad" onchange="toggleConadis(this)">
+                                        <span class="toggle-track"></span>
+                                    </label>
+                                </div>
+                                <div id="conadisWrap" style="display:none;padding:6px 0 4px;">
+                                    <div class="form-group">
+                                        <label>N.&ordm; Conadis</label>
+                                        <input class="form-control" type="text" id="pConadis">
+                                    </div>
+                                </div>
+                                <div class="toggle-row">
+                                    <span class="toggle-label">Paciente inactivo</span>
+                                    <label class="toggle">
+                                        <input type="checkbox" id="pInactivo">
+                                        <span class="toggle-track"></span>
+                                    </label>
+                                </div>
+                                <div class="toggle-row">
+                                    <span class="toggle-label">Autoriza Historia Cl&iacute;nica</span>
+                                    <label class="toggle">
+                                        <input type="checkbox" id="pAutorizaHC" checked>
+                                        <span class="toggle-track"></span>
+                                    </label>
+                                </div>
+                                <div class="toggle-row">
+                                    <span class="toggle-label">Extranjero</span>
+                                    <label class="toggle">
+                                        <input type="checkbox" id="pExtranjero">
+                                        <span class="toggle-track"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Foto de perfil -->
+                    <div>
+                        <div class="section-title" style="margin-bottom:10px;">Foto del Paciente</div>
+                        <div class="photo-drop" id="photoDrop"
+                             onclick="document.getElementById('photoFile').click()"
+                             ondragover="event.preventDefault()"
+                             ondrop="handleDrop(event)">
+                            <div id="photoPreview">
+                                <div style="font-size:40px;">&#128100;</div>
+                                <div class="photo-hint">Clic o arrastre<br>una imagen aqu&iacute;</div>
+                            </div>
+                        </div>
+                        <input type="file" id="photoFile" accept="image/*"
+                               style="display:none" onchange="previewPhoto(this)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabs restantes -->
+            <div class="tab-panel" id="tValidaciones">
+                <div class="empty-state"><div class="empty-icon">&#10003;</div><p>M&oacute;dulo de validaciones disponible pr&oacute;ximamente.</p></div>
+            </div>
+            <div class="tab-panel" id="tAseguradoras">
+                <div class="empty-state"><div class="empty-icon">&#128737;</div><p>M&oacute;dulo de aseguradoras disponible pr&oacute;ximamente.</p></div>
+            </div>
+            <div class="tab-panel" id="tRepresentante">
+                <div class="empty-state"><div class="empty-icon">&#128101;</div><p>M&oacute;dulo de representante disponible pr&oacute;ximamente.</p></div>
+            </div>
+            <div class="tab-panel" id="tAntecedentes">
+                <div class="empty-state"><div class="empty-icon">&#129657;</div><p>M&oacute;dulo de antecedentes y alergias disponible pr&oacute;ximamente.</p></div>
+            </div>
+            <div class="tab-panel" id="tUbicaciones">
+                <div class="empty-state"><div class="empty-icon">&#128205;</div><p>M&oacute;dulo de ubicaciones disponible pr&oacute;ximamente.</p></div>
+            </div>
+            <div class="tab-panel" id="tFirmas">
+                <div class="empty-state"><div class="empty-icon">&#9998;</div><p>M&oacute;dulo de firmas de asistencia disponible pr&oacute;ximamente.</p></div>
+            </div>
+            <div class="tab-panel" id="tArchivos">
+                <div class="empty-state"><div class="empty-icon">&#128193;</div><p>M&oacute;dulo de archivos disponible pr&oacute;ximamente.</p></div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="cerrar('overlayPaciente')">Cerrar</button>
+            <button class="btn btn-primary" id="btnGuardarPacienteInfo" onclick="guardarInfoPaciente()">
+                Guardar cambios
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ====================================================
+     MODAL 3: Nuevo Paciente
+     ==================================================== -->
+<div class="modal-overlay" id="overlayNuevoPaciente">
+    <div class="modal modal-md" role="dialog" aria-modal="true">
+        <div class="modal-header">
+            <h2>Registrar Nuevo Paciente</h2>
+            <button class="modal-close" onclick="cerrar('overlayNuevoPaciente')" aria-label="Cerrar">&#x2715;</button>
+        </div>
+        <div class="modal-body">
+            <div class="alert" id="alertaPaciente"></div>
+            <form id="formNuevoPaciente" novalidate>
+                <div class="form-section">
+                    <div class="section-title">Cuenta de acceso</div>
+                    <div class="form-grid">
+                        <div class="form-group span2">
+                            <label>Nombre completo <span class="req">*</span></label>
+                            <input class="form-control" type="text" id="npNombre" placeholder="Ej: Mar&iacute;a P&eacute;rez" required>
+                        </div>
+                        <div class="form-group span2">
+                            <label>Correo electr&oacute;nico <span class="req">*</span></label>
+                            <input class="form-control" type="email" id="npEmail" placeholder="paciente@correo.com" required>
+                        </div>
+                        <div class="form-group span2">
+                            <label>Contrase&ntilde;a temporal <span class="req">*</span></label>
+                            <input class="form-control" type="password" id="npPassword" placeholder="M&iacute;nimo 6 caracteres" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-section">
+                    <div class="section-title">Datos del paciente</div>
+                    <div class="form-grid">
+                        <div class="form-group span2">
+                            <label>C&eacute;dula</label>
+                            <input class="form-control" type="text" id="npCedula" placeholder="0000000000" maxlength="13">
+                        </div>
+                        <div class="form-group">
+                            <label>Fecha de nacimiento</label>
+                            <input class="form-control" type="date" id="npFechaNac">
+                        </div>
+                        <div class="form-group">
+                            <label>Sexo</label>
+                            <select class="form-control" id="npSexo">
+                                <option value="">&#8212; Seleccionar &#8212;</option>
+                                <option value="M">Masculino</option>
+                                <option value="F">Femenino</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Tel&eacute;fono</label>
+                            <input class="form-control" type="tel" id="npTelefono" placeholder="09XXXXXXXX">
+                        </div>
+                        <div class="form-group">
+                            <label>Grupo sangu&iacute;neo</label>
+                            <select class="form-control" id="npSangre">
+                                <option value="">&#8212;</option>
+                                <option>O+</option><option>O-</option>
+                                <option>A+</option><option>A-</option>
+                                <option>B+</option><option>B-</option>
+                                <option>AB+</option><option>AB-</option>
+                            </select>
+                        </div>
+                        <div class="form-group span2">
+                            <label>Tipo de seguro</label>
+                            <select class="form-control" id="npSeguro">
+                                <option value="">&#8212; Seleccionar &#8212;</option>
+                                <option value="AG">AG &mdash; Autom&aacute;tico General</option>
+                                <option value="SG">SG &mdash; Seguro General</option>
+                                <option value="SV">SV &mdash; Seguro de Vida</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="cerrar('overlayNuevoPaciente')">Cancelar</button>
+            <button class="btn btn-success" id="btnGuardarPaciente" onclick="guardarNuevoPaciente()">
+                Registrar Paciente
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+// ============================================================
+// Estado global
+// ============================================================
+let todasAtenciones = [];
+let mapamedicos     = {};       // { doctor_id: "Nombre (Especialidad)" }
+let mapaPacientes   = {};       // { patient_id: "Nombre completo" }
+let paginaActual    = 1;
+const POR_PAGINA    = 15;
+let filtroFecha     = 'hoy';
+let editandoId      = null;
+let _volverAModal   = false;    // Si se abre Nuevo Paciente desde Nueva Atención
+let pacienteActualId = null;    // ID del paciente abierto en el modal de info
+
+const COLUMNAS = [
+    { label: 'Atenci\u00f3n',     visible: true  },
+    { label: 'Fecha',             visible: true  },
+    { label: 'C\u00e9dula',       visible: true  },
+    { label: 'Paciente',          visible: true  },
+    { label: 'Edad',              visible: false },
+    { label: 'Sexo',              visible: false },
+    { label: 'Seguro',            visible: false },
+    { label: 'M\u00e9dico',       visible: true  },
+    { label: 'Motivo',            visible: true  },
+    { label: 'Estado',            visible: true  },
+    { label: 'Turno',             visible: true  },
+    { label: 'Usuario',           visible: false },
+    { label: 'Nota',              visible: true  },
+    { label: 'Hora cita',         visible: true  },
+    { label: 'Total',             visible: false },
+    { label: 'Acciones',          visible: true  },
+];
+
+// ============================================================
+// Guard de autenticaci\u00f3n e inicio
+// ============================================================
+if (!localStorage.getItem('token')) window.location.href = 'index.html';
+
+async function init() {
+    leerDatosUsuario();
+    await cargarMedicos();
+    await cargarPacientes();
+    await cargarAtenciones();
+    construirMenuColumnas();
+    aplicarColumnas();
+
+    document.getElementById('searchInput').addEventListener('input', () => { paginaActual = 1; renderTabla(); });
+    document.getElementById('statusFilter').addEventListener('change', () => { paginaActual = 1; renderTabla(); });
+}
+
+function leerDatosUsuario() {
+    try {
+        const payload = JSON.parse(atob(localStorage.getItem('token').split('.')[1]));
+        const correo = payload.sub || 'Usuario';
+        document.getElementById('userName').textContent = correo;
+        document.getElementById('userAvatar').textContent = correo[0].toUpperCase();
+    } catch (e) { /* ignore */ }
+}
+
+// ============================================================
+// Carga de datos
+// ============================================================
+async function cargarMedicos() {
+    try {
+        const lista = await api.getDoctors();
+        lista.forEach(d => {
+            mapamedicos[d.id] = d.user
+                ? `${d.user.full_name} (${d.specialty})`
+                : `M\u00e9dico ID ${d.id}`;
+        });
+        const sel = document.getElementById('fMedico');
+        lista.forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d.id;
+            opt.textContent = mapamedicos[d.id];
+            sel.appendChild(opt);
+        });
+    } catch (e) {
+        showToast('No se pudieron cargar los m\u00e9dicos.', 'error');
+    }
+}
+
+async function cargarPacientes() {
+    try {
+        const lista = await api.getPatients();
+        if (!Array.isArray(lista)) return;
+        lista.forEach(p => {
+            if (p.user) mapaPacientes[p.user_id] = p.user.full_name;
+        });
+        poblarSelectPacientes();
+    } catch (e) { /* silencioso */ }
+}
+
+function poblarSelectPacientes() {
+    const sel = document.getElementById('fPaciente');
+    if (!sel) return;
+    // Mantener opción placeholder
+    sel.innerHTML = '<option value="">&#8212; Seleccionar paciente &#8212;</option>';
+    Object.entries(mapaPacientes).forEach(([id, nombre]) => {
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = nombre;
+        sel.appendChild(opt);
+    });
+}
+
+async function cargarAtenciones() {
+    try {
+        todasAtenciones = await api.getAppointments();
+        paginaActual = 1;
+        renderTabla();
+    } catch (e) {
+        document.getElementById('tbodyAtenciones').innerHTML =
+            `<tr><td colspan="16"><div class="empty-state">
+                <div class="empty-icon">&#9888;</div>
+                <p>Error al cargar las atenciones. Verifique su sesi\u00f3n.</p>
+             </div></td></tr>`;
+    }
+}
+
+// ============================================================
+// Filtrado
+// ============================================================
+function filtrar() {
+    const texto  = document.getElementById('searchInput').value.toLowerCase();
+    const estado = document.getElementById('statusFilter').value;
+    const hoy    = new Date().toDateString();
+
+    return todasAtenciones.filter(a => {
+        const medico  = (mapamedicos[a.doctor_id] || '').toLowerCase();
+        const motivo  = (a.notes || '').toLowerCase();
+        const idStr   = String(a.id);
+        const okTexto = !texto || medico.includes(texto) || motivo.includes(texto) || idStr.includes(texto);
+        const okEst   = !estado || a.status === estado;
+        const okFecha = filtroFecha === 'todas' || new Date(a.appointment_datetime).toDateString() === hoy;
+        return okTexto && okEst && okFecha;
+    });
+}
+
+function setFiltroFecha(valor) {
+    filtroFecha = valor;
+    document.getElementById('btnHoy').classList.toggle('active', valor === 'hoy');
+    document.getElementById('btnTodas').classList.toggle('active', valor === 'todas');
+    paginaActual = 1;
+    renderTabla();
+}
+
+// ============================================================
+// Renderizado de tabla
+// ============================================================
+function badge(status) {
+    const MAP = {
+        scheduled: ['Agendada',  'badge-agendada'],
+        completed:  ['Cerrada',   'badge-cerrada'],
+        cancelled:  ['Cancelada', 'badge-cancelada'],
+    };
+    const [lbl, cls] = MAP[status] || ['Pendiente', 'badge-pendiente'];
+    return `<span class="badge ${cls}">${lbl}</span>`;
+}
+
+function esc(s) {
+    return String(s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderTabla() {
+    const filtrados = filtrar();
+    const inicio    = (paginaActual - 1) * POR_PAGINA;
+    const pagina    = filtrados.slice(inicio, inicio + POR_PAGINA);
+    const tbody     = document.getElementById('tbodyAtenciones');
+
+    if (!filtrados.length) {
+        tbody.innerHTML = `<tr><td colspan="16"><div class="empty-state">
+            <div class="empty-icon">&#128203;</div>
+            <p>No hay atenciones que coincidan con los filtros aplicados.</p>
+        </div></td></tr>`;
+        document.getElementById('pagInfo').textContent = '0 registros';
+        document.getElementById('pagControls').innerHTML = '';
+        return;
+    }
+
+    tbody.innerHTML = pagina.map((a, i) => {
+        const dt    = new Date(a.appointment_datetime);
+        const fecha = dt.toLocaleDateString('es-EC');
+        const hora  = dt.toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' });
+        const medico = esc(mapamedicos[a.doctor_id] || `ID ${a.doctor_id}`);
+        const turno  = inicio + i + 1;
+        const codigo = `ATN-${String(a.id).padStart(4, '0')}`;
+        const notaIco = a.notes
+            ? `<span class="note-icon" title="${esc(a.notes)}">&#128276;</span>`
+            : '&mdash;';
+        const motivoCorto = a.notes && a.notes.length > 40
+            ? esc(a.notes.slice(0, 40)) + '&hellip;'
+            : esc(a.notes || '&mdash;');
+
+        const nombrePac = a.patient_full_name ? esc(a.patient_full_name) : `PAC-${a.patient_id}`;
+
+        return `<tr>
+            <td style="font-weight:600;color:var(--primary)">${codigo}</td>
+            <td>${fecha}</td>
+            <td>&mdash;</td>
+            <td>
+                <a href="historia.html?id=${a.patient_id}"
+                   style="color:var(--primary);text-decoration:none;font-weight:500;"
+                   title="Ver historia cl\u00ednica">
+                   ${nombrePac}
+                </a>
+            </td>
+            <td>&mdash;</td>
+            <td>&mdash;</td>
+            <td>&mdash;</td>
+            <td>${medico}</td>
+            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">${motivoCorto}</td>
+            <td>${badge(a.status)}</td>
+            <td style="text-align:center;font-weight:700;">${turno}</td>
+            <td>&mdash;</td>
+            <td style="text-align:center;">${notaIco}</td>
+            <td>${hora}</td>
+            <td>&mdash;</td>
+            <td>
+                <button class="action-btn" onclick="abrirEditar(${a.id})" title="Editar atenci\u00f3n">&#9998;</button>
+                <button class="action-btn" onclick="abrirPaciente(${a.patient_id})" title="Ver historia cl\u00ednica">&#128203;</button>
+                <button class="action-btn cancel" onclick="cancelarAtencion(${a.id})" title="Cancelar atenci\u00f3n">&#128683;</button>
+            </td>
+        </tr>`;
+    }).join('');
+
+    // Paginaci\u00f3n
+    const total     = filtrados.length;
+    const totalPags = Math.ceil(total / POR_PAGINA);
+    const fin       = Math.min(inicio + POR_PAGINA, total);
+    document.getElementById('pagInfo').textContent =
+        `Mostrando ${inicio + 1}\u2013${fin} de ${total} registros`;
+    renderPaginacion(totalPags);
+    aplicarColumnas();
+}
+
+function renderPaginacion(totalPags) {
+    const ctrl = document.getElementById('pagControls');
+    if (totalPags <= 1) { ctrl.innerHTML = ''; return; }
+
+    let html = `<button class="page-btn" onclick="irPag(${paginaActual - 1})"
+        ${paginaActual === 1 ? 'disabled' : ''}>&lsaquo;</button>`;
+    for (let i = 1; i <= totalPags; i++) {
+        if (totalPags > 7 && Math.abs(i - paginaActual) > 2 && i !== 1 && i !== totalPags) {
+            if (i === 2 || i === totalPags - 1) html += `<span class="page-btn" style="cursor:default">&hellip;</span>`;
+            continue;
+        }
+        html += `<button class="page-btn ${i === paginaActual ? 'active' : ''}"
+            onclick="irPag(${i})">${i}</button>`;
+    }
+    html += `<button class="page-btn" onclick="irPag(${paginaActual + 1})"
+        ${paginaActual === totalPags ? 'disabled' : ''}>&rsaquo;</button>`;
+    ctrl.innerHTML = html;
+}
+
+function irPag(n) {
+    const total = Math.ceil(filtrar().length / POR_PAGINA);
+    if (n < 1 || n > total) return;
+    paginaActual = n;
+    renderTabla();
+}
+
+// ============================================================
+// Visibilidad de columnas
+// ============================================================
+function construirMenuColumnas() {
+    document.getElementById('colMenu').innerHTML = COLUMNAS.map((c, i) => `
+        <label class="col-item">
+            <input type="checkbox" ${c.visible ? 'checked' : ''}
+                   onchange="toggleCol(${i}, this.checked)">
+            ${c.label}
+        </label>`).join('');
+}
+
+function toggleCol(i, v) {
+    COLUMNAS[i].visible = v;
+    aplicarColumnas();
+}
+
+function aplicarColumnas() {
+    const tbl = document.getElementById('mainTable');
+    COLUMNAS.forEach((c, i) => {
+        tbl.querySelectorAll(`[data-col="${i}"]`).forEach(el => {
+            el.style.display = c.visible ? '' : 'none';
+        });
+        tbl.querySelectorAll(`tbody tr td:nth-child(${i + 1})`).forEach(el => {
+            el.style.display = c.visible ? '' : 'none';
+        });
+    });
+}
+
+function toggleColMenu() {
+    document.getElementById('colMenu').classList.toggle('open');
+}
+document.addEventListener('click', e => {
+    if (!e.target.closest('.col-dropdown'))
+        document.getElementById('colMenu').classList.remove('open');
+});
+
+// ============================================================
+// Modales: helpers
+// ============================================================
+function cerrar(id) { document.getElementById(id).classList.remove('active'); }
+
+document.querySelectorAll('.modal-overlay').forEach(o => {
+    o.addEventListener('click', e => { if (e.target === o) cerrar(o.id); });
+});
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape')
+        document.querySelectorAll('.modal-overlay.active').forEach(o => cerrar(o.id));
+});
+
+// ============================================================
+// Modal 1: Nueva Atenci\u00f3n
+// ============================================================
+function abrirModalNueva() {
+    editandoId = null;
+    document.getElementById('tituloModal').textContent = 'Nueva Atenci\u00f3n';
+    document.getElementById('formAtencion').reset();
+    document.getElementById('fFecha').value = new Date().toISOString().slice(0, 10);
+    document.querySelectorAll('#formAtencion .invalid').forEach(el => el.classList.remove('invalid'));
+    // Mostrar selector de paciente
+    document.getElementById('fPaciente').closest('.form-group.span2').style.display = '';
+    document.getElementById('overlayAtencion').classList.add('active');
+}
+
+function abrirEditar(id) {
+    const a = todasAtenciones.find(x => x.id === id);
+    if (!a) return;
+    editandoId = id;
+    document.getElementById('tituloModal').textContent =
+        `Editar Atenci\u00f3n ATN-${String(id).padStart(4, '0')}`;
+
+    const dt = new Date(a.appointment_datetime);
+    document.getElementById('fFecha').value  = dt.toISOString().slice(0, 10);
+    document.getElementById('fHora').value   = dt.toTimeString().slice(0, 5);
+    document.getElementById('fMedico').value = a.doctor_id;
+    document.getElementById('fMotivo').value = a.notes || '';
+    document.getElementById('fEstado').value = a.status;
+    document.querySelectorAll('#formAtencion .invalid').forEach(el => el.classList.remove('invalid'));
+    // Ocultar selector de paciente al editar
+    const pacGrp = document.getElementById('fPaciente').closest('.form-group.span2');
+    if (pacGrp) pacGrp.style.display = 'none';
+    document.getElementById('overlayAtencion').classList.add('active');
+}
+
+async function guardarAtencion() {
+    const campos = ['fFecha', 'fHora', 'fMedico', 'fMotivo'];
+    if (!editandoId) campos.push('fPaciente');
+    let valido = true;
+    campos.forEach(id => {
+        const el = document.getElementById(id);
+        const vacio = !el.value.trim();
+        el.classList.toggle('invalid', vacio);
+        if (vacio) valido = false;
+    });
+    if (!valido) { showToast('Complete los campos obligatorios (*)', 'error'); return; }
+
+    const btn = document.getElementById('btnGuardar');
+    btn.innerHTML = '<span class="spinner"></span> Guardando...';
+    btn.disabled  = true;
+
+    try {
+        const fecha      = document.getElementById('fFecha').value;
+        const hora       = document.getElementById('fHora').value;
+        const doctorId   = document.getElementById('fMedico').value;
+        const pacienteId = document.getElementById('fPaciente').value;
+        const motivo     = document.getElementById('fMotivo').value.trim();
+        const estado     = document.getElementById('fEstado').value;
+        const datetime   = `${fecha}T${hora}:00`;
+
+        let res;
+        if (editandoId) {
+            res = await api.updateAppointment(editandoId, estado, motivo);
+        } else {
+            res = await api.bookAppointmentForPatient(doctorId, datetime, motivo, pacienteId);
         }
 
-        async function loadAppointments() {
-            const apps = await api.getAppointments();
-            const list = document.getElementById('appointmentsList');
-            list.innerHTML = '';
-            apps.forEach(a => {
-                const row = `<tr>
-                    <td>${new Date(a.appointment_datetime).toLocaleString()}</td>
-                    <td>${a.doctor_id}</td>
-                    <td>${a.status}</td>
-                    <td>${a.notes || '-'}</td>
-                </tr>`;
-                list.innerHTML += row;
-            });
+        if (res && res.id) {
+            showToast(
+                editandoId ? 'Atenci\u00f3n actualizada correctamente.' : 'Atenci\u00f3n creada correctamente.',
+                'success'
+            );
+            cerrar('overlayAtencion');
+            // Al crear, cambiar filtro a "Todas" para que siempre aparezca la nueva atención
+            if (!editandoId) setFiltroFecha('todas');
+            await cargarAtenciones();
+        } else {
+            showToast('Error: ' + (res.detail || 'Respuesta inesperada del servidor.'), 'error');
         }
+    } catch (e) {
+        showToast('Error de conexi\u00f3n con el servidor.', 'error');
+    } finally {
+        btn.innerHTML = 'Guardar';
+        btn.disabled  = false;
+    }
+}
 
-        document.getElementById('bookForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const doctorId = document.getElementById('doctorSelect').value;
-            const datetime = document.getElementById('appDate').value;
-            const notes = document.getElementById('appNotes').value;
+async function cancelarAtencion(id) {
+    if (!confirm(`\u00bfDesea cancelar la atenci\u00f3n ATN-${String(id).padStart(4,'0')}?`)) return;
+    try {
+        const res = await api.updateAppointment(id, 'cancelled', null);
+        if (res && res.id) {
+            showToast('Atenci\u00f3n cancelada.', 'success');
+            await cargarAtenciones();
+        } else {
+            showToast('Error: ' + (res.detail || ''), 'error');
+        }
+    } catch (e) {
+        showToast('Error de conexi\u00f3n.', 'error');
+    }
+}
 
-            const res = await api.bookAppointment(doctorId, datetime, notes);
-            if (res.id) {
-                alert('Appointment booked successfully!');
-                loadAppointments();
-            } else {
-                alert('Error booking: ' + (res.detail || 'Unknown error'));
-            }
+// ============================================================
+// Modal 2: Informaci\u00f3n del Paciente
+// ============================================================
+async function abrirPaciente(patientId) {
+    pacienteActualId = patientId;
+
+    // Resetear tabs
+    document.querySelectorAll('#overlayPaciente .tab-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+    document.querySelectorAll('#overlayPaciente .tab-panel').forEach((p, i) => p.classList.toggle('active', i === 0));
+    document.getElementById('overlayPaciente').classList.add('active');
+
+    // Limpiar formulario mientras carga
+    limpiarFormPaciente();
+
+    try {
+        const p = await api.getPatient(patientId);
+        if (!p || p.detail) return;
+
+        // Nombre del paciente en el título del modal
+        const nombre = p.user ? p.user.full_name : `PAC-${patientId}`;
+        document.querySelector('#overlayPaciente .modal-header h2').textContent =
+            `Información del Paciente — ${nombre}`;
+
+        // Datos de identidad
+        if (p.cedula)           document.getElementById('pCedula').value    = p.cedula;
+        if (p.fecha_nacimiento) document.getElementById('pFechaNac').value  = p.fecha_nacimiento;
+        if (p.sexo)             document.getElementById('pSexo').value      = p.sexo;
+        if (p.telefono)         document.getElementById('pCelular').value   = p.telefono;
+        if (p.user && p.user.email) document.getElementById('pEmail').value = p.user.email;
+        if (p.direccion)        document.getElementById('pDireccion').value = p.direccion;
+
+        // Datos médicos
+        if (p.grupo_sanguineo)  document.getElementById('pSangre').value    = p.grupo_sanguineo;
+        if (p.tipo_seguro)      document.getElementById('pSeguro').value    = p.tipo_seguro;
+        if (p.empresa)          document.getElementById('pEmpresa').value   = p.empresa;
+        if (p.ocupacion)        document.getElementById('pOcupacion').value = p.ocupacion;
+        if (p.hc_numero)        document.getElementById('pHC').value        = p.hc_numero;
+        if (p.ciudad)           document.getElementById('pCanton').value    = p.ciudad;
+
+        // Calcular edad si hay fecha de nacimiento
+        if (p.fecha_nacimiento) calcEdad();
+
+    } catch (e) {
+        showToast('No se pudieron cargar los datos del paciente.', 'error');
+    }
+}
+
+function limpiarFormPaciente() {
+    const ids = ['pCedula','pFechaNac','pSexo','pCelular','pTelFijo','pEmail',
+                 'pApP','pApM','pNom1','pNom2','pEdad','pDireccion','pProvincia',
+                 'pCanton','pParroquia','pSector','pHC','pHCIESS','pSangre',
+                 'pSeguro','pEmpresa','pOcupacion'];
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    document.querySelector('#overlayPaciente .modal-header h2').textContent =
+        'Informaci\u00f3n General del Paciente';
+}
+
+async function guardarInfoPaciente() {
+    if (!pacienteActualId) return;
+
+    const btn = document.getElementById('btnGuardarPacienteInfo');
+    btn.innerHTML = '<span class="spinner" style="border-color:rgba(255,255,255,.4);border-top-color:#fff;"></span> Guardando...';
+    btn.disabled = true;
+
+    try {
+        const data = {
+            cedula:          document.getElementById('pCedula').value.trim()    || null,
+            fecha_nacimiento:document.getElementById('pFechaNac').value         || null,
+            sexo:            document.getElementById('pSexo').value             || null,
+            telefono:        document.getElementById('pCelular').value.trim()   || null,
+            grupo_sanguineo: document.getElementById('pSangre').value           || null,
+            tipo_seguro:     document.getElementById('pSeguro').value           || null,
+            direccion:       document.getElementById('pDireccion').value.trim() || null,
+            ciudad:          document.getElementById('pCanton').value.trim()    || null,
+            ocupacion:       document.getElementById('pOcupacion').value.trim() || null,
+            empresa:         document.getElementById('pEmpresa').value.trim()   || null,
+            hc_numero:       document.getElementById('pHC').value.trim()        || null,
         };
 
-        init();
-    </script>
+        const res = await api.updatePatient(pacienteActualId, data);
+        if (res && res.id) {
+            showToast('Datos del paciente guardados correctamente.', 'success');
+            cerrar('overlayPaciente');
+            // Actualizar mapa de pacientes si cambió algo
+            if (res.user) mapaPacientes[res.user_id] = res.user.full_name;
+        } else {
+            showToast('Error: ' + (res.detail || 'No se pudieron guardar los cambios.'), 'error');
+        }
+    } catch (e) {
+        showToast('Error de conexi\u00f3n con el servidor.', 'error');
+    } finally {
+        btn.innerHTML = 'Guardar cambios';
+        btn.disabled = false;
+    }
+}
+
+function tab(btn, panelId) {
+    const modal = btn.closest('.modal');
+    modal.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    modal.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(panelId).classList.add('active');
+}
+
+function calcEdad() {
+    const val = document.getElementById('pFechaNac').value;
+    if (!val) return;
+    const hoy = new Date(), nac = new Date(val);
+    let edad = hoy.getFullYear() - nac.getFullYear();
+    if (hoy.getMonth() < nac.getMonth() ||
+        (hoy.getMonth() === nac.getMonth() && hoy.getDate() < nac.getDate())) edad--;
+    document.getElementById('pEdad').value = `${edad} a\u00f1os`;
+}
+
+function toggleConadis(chk) {
+    document.getElementById('conadisWrap').style.display = chk.checked ? 'block' : 'none';
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    const f = e.dataTransfer.files[0];
+    if (f && f.type.startsWith('image/')) mostrarFoto(f);
+}
+
+function previewPhoto(input) {
+    if (input.files[0]) mostrarFoto(input.files[0]);
+}
+
+function mostrarFoto(file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+        document.getElementById('photoPreview').innerHTML =
+            `<img src="${e.target.result}" style="width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid var(--border);" alt="Foto del paciente">`;
+    };
+    reader.readAsDataURL(file);
+}
+
+// ============================================================
+// Exportar a Excel (CSV con BOM para Excel)
+// ============================================================
+function exportarExcel() {
+    const datos = filtrar();
+    if (!datos.length) { showToast('No hay datos para exportar.', 'error'); return; }
+
+    const STATUS = { scheduled:'Agendada', completed:'Cerrada', cancelled:'Cancelada' };
+    const cabecera = ['Atenci\u00f3n','Fecha','M\u00e9dico','Motivo','Estado','Hora cita'];
+    const filas = datos.map(a => {
+        const dt = new Date(a.appointment_datetime);
+        return [
+            `ATN-${String(a.id).padStart(4,'0')}`,
+            dt.toLocaleDateString('es-EC'),
+            mapamedicos[a.doctor_id] || '',
+            a.notes || '',
+            STATUS[a.status] || a.status,
+            dt.toLocaleTimeString('es-EC', { hour:'2-digit', minute:'2-digit' }),
+        ];
+    });
+
+    const csv = [cabecera, ...filas]
+        .map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(','))
+        .join('\r\n');
+
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+    const a = Object.assign(document.createElement('a'), {
+        href: URL.createObjectURL(blob),
+        download: `atenciones_${new Date().toISOString().slice(0,10)}.csv`,
+    });
+    a.click();
+    showToast('Archivo exportado correctamente.', 'success');
+}
+
+// ============================================================
+// Toast
+// ============================================================
+let _toastTimer;
+function showToast(msg, tipo = 'info') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast show ${tipo}`;
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => t.classList.remove('show'), 3800);
+}
+
+// ============================================================
+// Modal 3: Nuevo Paciente
+// ============================================================
+function abrirModalNuevoPaciente(desdeAtencion = false) {
+    _volverAModal = desdeAtencion;
+    document.getElementById('formNuevoPaciente').reset();
+    document.getElementById('alertaPaciente').className = 'alert';
+    document.getElementById('alertaPaciente').textContent = '';
+    document.getElementById('overlayNuevoPaciente').classList.add('active');
+}
+
+function mostrarAlertaPaciente(msg, tipo = 'error') {
+    const el = document.getElementById('alertaPaciente');
+    el.textContent = msg;
+    el.className = `alert ${tipo} show`;
+}
+
+async function guardarNuevoPaciente() {
+    const nombre   = document.getElementById('npNombre').value.trim();
+    const email    = document.getElementById('npEmail').value.trim();
+    const password = document.getElementById('npPassword').value;
+
+    if (!nombre || !email || !password) {
+        mostrarAlertaPaciente('Complete los campos obligatorios (*).');
+        return;
+    }
+    if (password.length < 6) {
+        mostrarAlertaPaciente('La contrase\u00f1a debe tener al menos 6 caracteres.');
+        return;
+    }
+
+    const btn = document.getElementById('btnGuardarPaciente');
+    btn.innerHTML = '<span class="spinner"></span> Registrando...';
+    btn.disabled  = true;
+
+    try {
+        const data = {
+            full_name: nombre,
+            email,
+            password,
+            cedula:           document.getElementById('npCedula').value.trim() || null,
+            fecha_nacimiento: document.getElementById('npFechaNac').value || null,
+            sexo:             document.getElementById('npSexo').value || null,
+            telefono:         document.getElementById('npTelefono').value.trim() || null,
+            grupo_sanguineo:  document.getElementById('npSangre').value || null,
+            tipo_seguro:      document.getElementById('npSeguro').value || null,
+        };
+
+        const res = await api.createPatient(data);
+        if (res && res.id) {
+            // Agregar al mapa y al select
+            mapaPacientes[res.user_id] = res.user.full_name;
+            poblarSelectPacientes();
+            showToast(`Paciente '${res.user.full_name}' registrado correctamente.`, 'success');
+            cerrar('overlayNuevoPaciente');
+            // Si se abrió desde Nueva Atención, preseleccionar el paciente
+            if (_volverAModal) {
+                document.getElementById('fPaciente').value = res.user_id;
+                document.getElementById('overlayAtencion').classList.add('active');
+            }
+        } else {
+            mostrarAlertaPaciente('Error: ' + (res.detail || 'No se pudo registrar el paciente.'));
+        }
+    } catch (e) {
+        mostrarAlertaPaciente('Error de conexi\u00f3n con el servidor.');
+    } finally {
+        btn.innerHTML = 'Registrar Paciente';
+        btn.disabled  = false;
+    }
+}
+
+// ============================================================
+// Arranque
+// ============================================================
+init();
+</script>
 </body>
 </html>

@@ -19,4 +19,5 @@ class User(Base):
     is_active = Column(Boolean, default=True)
 
     doctor_profile = relationship("Doctor", back_populates="user", uselist=False)
+    patient_profile = relationship("PatientProfile", back_populates="user", uselist=False)
     appointments = relationship("Appointment", back_populates="patient")

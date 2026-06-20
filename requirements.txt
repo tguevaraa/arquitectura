@@ -7,9 +7,14 @@ pydantic[email]
 pydantic-settings
 python-jose[cryptography]
 passlib[bcrypt]
+bcrypt
 pandas
+aiofiles
 python-multipart
 python-dotenv
+google-api-python-client
+google-auth
+google-auth-httplib2
 cryptography
 pytest
 pytest-asyncio

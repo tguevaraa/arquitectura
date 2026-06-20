@@ -1,0 +1,46 @@
+# ── Entorno y secretos ────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+credentials/
+*.json.key
+
+# ── Python ────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# ── Entorno virtual ───────────────────────────────────────────
+venv/
+env/
+.venv/
+.env/
+ENV/
+
+# ── Base de datos local ───────────────────────────────────────
+*.db
+*.sqlite3
+
+# ── Pytest / coverage ─────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ── IDEs ──────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Logs ──────────────────────────────────────────────────────
+*.log
+logs/

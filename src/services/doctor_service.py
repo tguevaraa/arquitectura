@@ -1,12 +1,13 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 from fastapi import HTTPException
 from src.models.doctor import Doctor
 from src.models.user import User, UserRole
 from src.schemas import DoctorCreate
 
 async def get_all_doctors(db: AsyncSession):
-    result = await db.execute(select(Doctor).join(User))
+    result = await db.execute(select(Doctor).options(selectinload(Doctor.user)))
     return result.scalars().all()
 
 async def create_doctor_profile(db: AsyncSession, doctor_data: DoctorCreate):

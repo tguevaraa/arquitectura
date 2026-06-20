@@ -1,88 +1,280 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión - Gestión Médica</title>
+    <title>Acceso al Sistema - UMEDIC</title>
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f0f2f5; }
-        .card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-        h1 { text-align: center; color: #1a73e8; }
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; margin-bottom: 0.5rem; }
-        input, select { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; padding: 0.75rem; background: #1a73e8; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; }
-        button:hover { background: #1557b0; }
-        .toggle { text-align: center; margin-top: 1rem; color: #666; cursor: pointer; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            background: #f1f3f4;
+        }
+
+        /* Panel lateral izquierdo */
+        .side-panel {
+            display: none;
+            flex: 1;
+            background: linear-gradient(145deg, #1a73e8 0%, #0d47a1 100%);
+            color: #fff;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 48px 40px;
+            text-align: center;
+        }
+        @media (min-width: 900px) { .side-panel { display: flex; } }
+
+        .side-logo { font-size: 56px; margin-bottom: 20px; }
+        .side-title { font-size: 28px; font-weight: 700; margin-bottom: 10px; letter-spacing: -.3px; }
+        .side-sub   { font-size: 15px; opacity: .8; line-height: 1.6; max-width: 320px; }
+        .side-features { margin-top: 36px; display: flex; flex-direction: column; gap: 14px; text-align: left; }
+        .feature {
+            display: flex; align-items: center; gap: 12px;
+            background: rgba(255,255,255,.12); border-radius: 10px;
+            padding: 12px 16px; font-size: 14px;
+        }
+        .feature-icon { font-size: 20px; flex-shrink: 0; }
+
+        /* Panel derecho (formulario) */
+        .form-panel {
+            width: 100%; max-width: 460px;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            padding: 40px 32px; margin: 0 auto;
+        }
+        @media (min-width: 900px) { .form-panel { margin: 0; } }
+
+        .card {
+            background: #fff; border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,.1);
+            padding: 36px 32px; width: 100%;
+        }
+
+        .card-header { text-align: center; margin-bottom: 28px; }
+        .card-icon { font-size: 36px; margin-bottom: 10px; }
+        .card-title { font-size: 22px; font-weight: 700; color: #202124; }
+        .card-subtitle { font-size: 13px; color: #5f6368; margin-top: 4px; }
+
+        /* Tabs login / registro */
+        .auth-tabs {
+            display: flex; background: #f1f3f4; border-radius: 8px;
+            padding: 4px; margin-bottom: 24px; gap: 4px;
+        }
+        .auth-tab {
+            flex: 1; padding: 8px; border: none; background: none;
+            border-radius: 6px; font-size: 13px; font-weight: 600;
+            cursor: pointer; color: #5f6368; transition: all .2s;
+        }
+        .auth-tab.active { background: #fff; color: #1a73e8; box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+
+        /* Formulario */
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block; font-size: 12px; font-weight: 600;
+            color: #5f6368; margin-bottom: 6px;
+        }
+        .form-control {
+            width: 100%; padding: 10px 14px;
+            border: 1px solid #e0e0e0; border-radius: 8px;
+            font-size: 14px; outline: none; transition: border .2s;
+            background: #fff; color: #202124;
+        }
+        .form-control:focus { border-color: #1a73e8; box-shadow: 0 0 0 3px rgba(26,115,232,.12); }
+
+        .btn-submit {
+            width: 100%; padding: 12px;
+            background: #1a73e8; color: #fff;
+            border: none; border-radius: 8px;
+            font-size: 15px; font-weight: 700;
+            cursor: pointer; transition: background .2s; margin-top: 4px;
+        }
+        .btn-submit:hover { background: #1557b0; }
+        .btn-submit:disabled { opacity: .6; cursor: not-allowed; }
+
+        /* Spinner */
+        .spinner {
+            display: inline-block; width: 15px; height: 15px;
+            border: 2px solid rgba(255,255,255,.4); border-top-color: #fff;
+            border-radius: 50%; animation: spin .7s linear infinite;
+            vertical-align: middle; margin-right: 6px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Alerta de error */
+        .alert {
+            padding: 10px 14px; border-radius: 8px; font-size: 13px;
+            margin-bottom: 16px; display: none;
+        }
+        .alert.error   { background: #fce8e6; color: #c5221f; border: 1px solid #f5c6c2; }
+        .alert.success { background: #e6f4ea; color: #1e8e3e; border: 1px solid #b7dfbf; }
+        .alert.show { display: block; }
+
+        .footer-text {
+            text-align: center; margin-top: 20px;
+            font-size: 12px; color: #5f6368;
+        }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1 id="title">Iniciar Sesión</h1>
-        <form id="authForm">
-            <div class="form-group" id="nameGroup" style="display: none;">
-                <label>Nombre Completo</label>
-                <input type="text" id="fullName">
+
+    <!-- Panel lateral informativo -->
+    <div class="side-panel">
+        <div class="side-logo">&#9877;</div>
+        <div class="side-title">UMEDIC</div>
+        <div class="side-sub">Unidad M&eacute;dica Central &mdash; Sistema de Gesti&oacute;n de Atenciones M&eacute;dicas</div>
+        <div class="side-features">
+            <div class="feature">
+                <span class="feature-icon">&#128197;</span>
+                <span>Agenda y gestiona citas en tiempo real</span>
             </div>
-            <div class="form-group">
-                <label>Correo Electrónico</label>
-                <input type="email" id="email" required>
+            <div class="feature">
+                <span class="feature-icon">&#128203;</span>
+                <span>Historia cl&iacute;nica integral por paciente</span>
             </div>
-            <div class="form-group">
-                <label>Contraseña</label>
-                <input type="password" id="password" required>
+            <div class="feature">
+                <span class="feature-icon">&#128202;</span>
+                <span>Reportes anal&iacute;ticos y exportaci&oacute;n Excel</span>
             </div>
-            <div class="form-group" id="roleGroup" style="display: none;">
-                <label>Rol</label>
-                <select id="role">
-                    <option value="patient">Paciente</option>
-                    <option value="doctor">Doctor</option>
-                </select>
+            <div class="feature">
+                <span class="feature-icon">&#128274;</span>
+                <span>Acceso seguro con autenticaci&oacute;n JWT</span>
             </div>
-            <button type="submit">Enviar</button>
-        </form>
-        <div class="toggle" id="toggleAuth">¿No tienes cuenta? Regístrate</div>
+        </div>
+    </div>
+
+    <!-- Panel del formulario -->
+    <div class="form-panel">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">&#9877;</div>
+                <div class="card-title">UMEDIC</div>
+                <div class="card-subtitle">Unidad M&eacute;dica Central</div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="auth-tabs">
+                <button class="auth-tab active" id="tabLogin"    onclick="cambiarModo(true)">Iniciar sesi&oacute;n</button>
+                <button class="auth-tab"        id="tabRegistro" onclick="cambiarModo(false)">Registrarse</button>
+            </div>
+
+            <!-- Alerta -->
+            <div class="alert" id="alerta"></div>
+
+            <form id="authForm" novalidate>
+                <!-- Solo en registro -->
+                <div id="grupoNombre" style="display:none">
+                    <div class="form-group">
+                        <label>Nombre completo</label>
+                        <input class="form-control" type="text" id="fullName" placeholder="Ej: Juan P&eacute;rez">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Correo electr&oacute;nico</label>
+                    <input class="form-control" type="email" id="email" placeholder="usuario@correo.com" required autocomplete="email">
+                </div>
+
+                <div class="form-group">
+                    <label>Contrase&ntilde;a</label>
+                    <input class="form-control" type="password" id="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" required autocomplete="current-password">
+                </div>
+
+                <!-- Solo en registro -->
+                <div id="grupoRol" style="display:none">
+                    <div class="form-group">
+                        <label>Rol en el sistema</label>
+                        <select class="form-control" id="role">
+                            <option value="patient">Paciente</option>
+                            <option value="doctor">M&eacute;dico</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit" id="btnSubmit">
+                    Iniciar sesi&oacute;n
+                </button>
+            </form>
+
+            <div class="footer-text">
+                &copy; 2025 Unidad M&eacute;dica Central &mdash; Todos los derechos reservados.
+            </div>
+        </div>
     </div>
 
     <script src="js/api.js"></script>
     <script>
-        const form = document.getElementById('authForm');
-        const toggleBtn = document.getElementById('toggleAuth');
-        let isLogin = true;
+        let modoLogin = true;
 
-        toggleBtn.onclick = () => {
-            isLogin = !isLogin;
-            document.getElementById('title').innerText = isLogin ? 'Iniciar Sesión' : 'Registrarse';
-            document.getElementById('nameGroup').style.display = isLogin ? 'none' : 'block';
-            document.getElementById('roleGroup').style.display = isLogin ? 'none' : 'block';
-            toggleBtn.innerText = isLogin ? '¿No tienes cuenta? Regístrate' : '¿Ya tienes cuenta? Inicia Sesión';
-        };
+        function cambiarModo(esLogin) {
+            modoLogin = esLogin;
+            document.getElementById('tabLogin').classList.toggle('active', esLogin);
+            document.getElementById('tabRegistro').classList.toggle('active', !esLogin);
+            document.getElementById('grupoNombre').style.display = esLogin ? 'none' : 'block';
+            document.getElementById('grupoRol').style.display    = esLogin ? 'none' : 'block';
+            document.getElementById('btnSubmit').textContent     = esLogin ? 'Iniciar sesi\u00f3n' : 'Crear cuenta';
+            ocultarAlerta();
+        }
 
-        form.onsubmit = async (e) => {
+        function mostrarAlerta(msg, tipo = 'error') {
+            const el = document.getElementById('alerta');
+            el.textContent = msg;
+            el.className = `alert ${tipo} show`;
+        }
+
+        function ocultarAlerta() {
+            document.getElementById('alerta').className = 'alert';
+        }
+
+        document.getElementById('authForm').addEventListener('submit', async e => {
             e.preventDefault();
-            const email = document.getElementById('email').value;
+            ocultarAlerta();
+
+            const email    = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
-            
+            const btn      = document.getElementById('btnSubmit');
+
+            if (!email || !password) {
+                mostrarAlerta('Complete el correo y la contrase\u00f1a.');
+                return;
+            }
+
+            btn.innerHTML = '<span class="spinner"></span> ' + (modoLogin ? 'Ingresando...' : 'Creando cuenta...');
+            btn.disabled  = true;
+
             try {
-                if (isLogin) {
+                if (modoLogin) {
                     const res = await api.login(email, password);
-                    if (res.access_token) window.location.href = 'dashboard.html';
-                    else alert('Error al iniciar sesión: ' + (res.detail || 'Error desconocido'));
-                } else {
-                    const name = document.getElementById('fullName').value;
-                    const role = document.getElementById('role').value;
-                    const res = await api.register(email, password, name, role);
-                    if (res.id) {
-                        alert('¡Registro exitoso! Por favor, inicia sesión.');
-                        toggleBtn.click();
+                    if (res.access_token) {
+                        const payload = JSON.parse(atob(res.access_token.split('.')[1]));
+                        window.location.href = payload.role === 'admin' ? 'admin.html' : 'dashboard.html';
                     } else {
-                        alert('Error al registrar: ' + JSON.stringify(res.detail));
+                        mostrarAlerta('Correo o contrase\u00f1a incorrectos. Int\u00e9ntelo de nuevo.');
+                    }
+                } else {
+                    const nombre = document.getElementById('fullName').value.trim();
+                    const rol    = document.getElementById('role').value;
+                    if (!nombre) { mostrarAlerta('Ingrese su nombre completo.'); return; }
+                    const res = await api.register(email, password, nombre, rol);
+                    if (res.id) {
+                        mostrarAlerta('\u00a1Registro exitoso! Ahora puede iniciar sesi\u00f3n.', 'success');
+                        setTimeout(() => cambiarModo(true), 1500);
+                    } else {
+                        mostrarAlerta('Error al registrar: ' + (Array.isArray(res.detail)
+                            ? res.detail.map(d => d.msg).join(', ')
+                            : (res.detail || 'Error desconocido')));
                     }
                 }
             } catch (err) {
-                alert('Error: ' + err.message);
+                mostrarAlerta('No se pudo conectar con el servidor. Verifique que el backend est\u00e9 activo.');
+            } finally {
+                btn.innerHTML = modoLogin ? 'Iniciar sesi\u00f3n' : 'Crear cuenta';
+                btn.disabled  = false;
             }
-        };
+        });
     </script>
 </body>
 </html>

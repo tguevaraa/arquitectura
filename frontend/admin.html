@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Administrativo - UMEDIC</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --primary:      #1a73e8;
+            --primary-dark: #1557b0;
+            --success:      #34a853;
+            --warning:      #f9ab00;
+            --danger:       #ea4335;
+            --sidebar-w:    220px;
+            --header-h:     56px;
+            --bg:           #f1f3f4;
+            --card:         #ffffff;
+            --border:       #e0e0e0;
+            --text:         #202124;
+            --muted:        #5f6368;
+            --shadow:       0 1px 4px rgba(0,0,0,.1);
+            --shadow-lg:    0 4px 20px rgba(0,0,0,.15);
+            --radius:       8px;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 14px;
+            min-height: 100vh;
+        }
+
+        /* ── Header ── */
+        .header {
+            position: fixed; top: 0; left: 0; right: 0;
+            height: var(--header-h); background: var(--primary);
+            color: #fff; display: flex; align-items: center;
+            justify-content: space-between; padding: 0 20px 0 0;
+            z-index: 200; box-shadow: 0 2px 8px rgba(0,0,0,.2);
+        }
+        .header-left {
+            display: flex; align-items: center; gap: 0;
+            width: var(--sidebar-w); padding: 0 20px;
+            border-right: 1px solid rgba(255,255,255,.15);
+            height: 100%;
+        }
+        .header-brand { font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+        .header-brand span { font-size: 11px; font-weight: 400; opacity: .7; }
+        .header-right { display: flex; align-items: center; gap: 14px; }
+        .admin-chip {
+            display: flex; align-items: center; gap: 8px;
+            background: rgba(255,255,255,.15); border-radius: 20px;
+            padding: 4px 14px 4px 4px;
+        }
+        .admin-avatar {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: rgba(255,255,255,.25); font-weight: 700;
+            font-size: 12px; display: flex; align-items: center; justify-content: center;
+        }
+        .admin-name { font-size: 13px; }
+        .btn-logout {
+            background: rgba(255,255,255,.15); border: none; color: #fff;
+            padding: 6px 14px; border-radius: 6px; cursor: pointer;
+            font-size: 13px; font-weight: 500; transition: background .2s;
+        }
+        .btn-logout:hover { background: rgba(255,255,255,.28); }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            position: fixed; top: var(--header-h); left: 0; bottom: 0;
+            width: var(--sidebar-w); background: #fff;
+            border-right: 1px solid var(--border); z-index: 100;
+            display: flex; flex-direction: column; padding: 16px 0;
+            box-shadow: 2px 0 8px rgba(0,0,0,.04);
+        }
+        .nav-section-label {
+            font-size: 10px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: .6px; color: var(--muted);
+            padding: 12px 20px 6px; margin-top: 8px;
+        }
+        .nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 20px; cursor: pointer; transition: all .15s;
+            font-size: 13px; font-weight: 500; color: var(--muted);
+            border-left: 3px solid transparent; text-decoration: none;
+        }
+        .nav-item:hover { background: #f1f3f4; color: var(--text); }
+        .nav-item.active {
+            background: #e8f0fe; color: var(--primary);
+            border-left-color: var(--primary); font-weight: 700;
+        }
+        .nav-icon { font-size: 17px; width: 22px; text-align: center; }
+        .nav-badge {
+            margin-left: auto; background: var(--primary); color: #fff;
+            font-size: 10px; font-weight: 700; border-radius: 10px;
+            padding: 1px 7px; min-width: 18px; text-align: center;
+        }
+
+        /* ── Main ── */
+        .main {
+            margin-left: var(--sidebar-w);
+            margin-top: var(--header-h);
+            padding: 24px;
+            min-height: calc(100vh - var(--header-h));
+        }
+
+        /* ── Page header ── */
+        .page-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .page-title { font-size: 20px; font-weight: 800; }
+        .page-sub   { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+        /* ── Cards ── */
+        .card {
+            background: var(--card); border-radius: var(--radius);
+            box-shadow: var(--shadow); overflow: hidden; margin-bottom: 20px;
+        }
+        .card-head {
+            padding: 14px 20px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            background: #fafafa;
+        }
+        .card-head h3 { font-size: 14px; font-weight: 700; }
+
+        /* ── Búsqueda / Filtros ── */
+        .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+        .search-box {
+            display: flex; align-items: center; gap: 8px;
+            border: 1px solid var(--border); border-radius: 6px;
+            padding: 7px 12px; background: #fff; flex: 1; max-width: 320px;
+        }
+        .search-box:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(26,115,232,.1); }
+        .search-box input { border: none; outline: none; width: 100%; font-size: 14px; }
+        .filter-select {
+            border: 1px solid var(--border); border-radius: 6px;
+            padding: 7px 10px; font-size: 13px; background: #fff; outline: none;
+        }
+
+        /* ── Tabla ── */
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        thead th {
+            background: #f8f9fa; color: var(--muted); font-size: 11px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: .5px;
+            padding: 10px 14px; text-align: left; border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+        tbody tr { transition: background .12s; }
+        tbody tr:hover { background: #f8fbff; }
+        tbody td { padding: 11px 14px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+        tbody tr:last-child td { border-bottom: none; }
+
+        /* ── Badges ── */
+        .badge {
+            display: inline-block; padding: 3px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: 700;
+        }
+        .badge-admin   { background: #fce8e6; color: #c5221f; }
+        .badge-doctor  { background: #e8f0fe; color: #1a73e8; }
+        .badge-patient { background: #e6f4ea; color: #1e8e3e; }
+        .badge-active  { background: #e6f4ea; color: #1e8e3e; }
+        .badge-inactive{ background: #f1f3f4; color: var(--muted); border: 1px solid var(--border); }
+
+        /* ── Botones ── */
+        .btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 7px 14px; border-radius: 6px; border: none;
+            font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s;
+            white-space: nowrap;
+        }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .btn-primary  { background: var(--primary); color: #fff; }
+        .btn-primary:hover  { background: var(--primary-dark); }
+        .btn-secondary { background: #f1f3f4; color: var(--text); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: #e0e0e0; }
+        .btn-success  { background: var(--success); color: #fff; }
+        .btn-success:hover  { filter: brightness(.9); }
+        .btn-danger   { background: #fce8e6; color: var(--danger); border: 1px solid #f5c6c2; }
+        .btn-danger:hover   { background: var(--danger); color: #fff; }
+        .btn-warning  { background: #fff8e1; color: #7a5c00; border: 1px solid #fce8a4; }
+        .btn-warning:hover  { background: var(--warning); color: #fff; }
+        .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+        .actions { display: flex; gap: 6px; }
+
+        /* ── Role select inline ── */
+        .role-select {
+            border: 1px solid var(--border); border-radius: 5px;
+            padding: 4px 8px; font-size: 12px; outline: none; background: #fff;
+            cursor: pointer;
+        }
+        .role-select:focus { border-color: var(--primary); }
+
+        /* ── Toggle (activo/inactivo) ── */
+        .toggle { position: relative; width: 38px; height: 22px; flex-shrink: 0; }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .toggle-track {
+            position: absolute; inset: 0; background: #ccc; border-radius: 22px;
+            cursor: pointer; transition: background .25s;
+        }
+        .toggle-track::before {
+            content: ''; position: absolute; width: 16px; height: 16px;
+            left: 3px; top: 3px; background: #fff; border-radius: 50%;
+            transition: transform .25s; box-shadow: 0 1px 2px rgba(0,0,0,.2);
+        }
+        .toggle input:checked + .toggle-track { background: var(--success); }
+        .toggle input:checked + .toggle-track::before { transform: translateX(16px); }
+
+        /* ── Stat cards ── */
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 20px; }
+        .stat-card {
+            background: #fff; border-radius: var(--radius); box-shadow: var(--shadow);
+            padding: 20px; display: flex; align-items: center; gap: 14px;
+        }
+        .stat-icon { font-size: 28px; }
+        .stat-val  { font-size: 26px; font-weight: 800; line-height: 1; }
+        .stat-label{ font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+        /* ── Modales ── */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,.45); z-index: 1000;
+            align-items: center; justify-content: center;
+            padding: 20px; backdrop-filter: blur(3px);
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: #fff; border-radius: 14px;
+            box-shadow: 0 20px 60px rgba(0,0,0,.25);
+            width: 100%; max-height: 90vh; display: flex; flex-direction: column;
+            animation: mIn .2s ease;
+        }
+        @keyframes mIn { from { opacity:0; transform:translateY(-14px) scale(.97); } to { opacity:1; transform:none; } }
+        .modal-sm { max-width: 440px; }
+        .modal-md { max-width: 580px; }
+        .modal-header {
+            padding: 18px 24px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            background: #fafafa; border-radius: 14px 14px 0 0; flex-shrink: 0;
+        }
+        .modal-header h3 { font-size: 16px; font-weight: 700; }
+        .modal-close {
+            background: none; border: none; font-size: 18px; cursor: pointer;
+            color: var(--muted); width: 32px; height: 32px; border-radius: 5px;
+            display: flex; align-items: center; justify-content: center; transition: all .15s;
+        }
+        .modal-close:hover { background: #f1f3f4; }
+        .modal-body { padding: 24px; overflow-y: auto; }
+        .modal-footer {
+            padding: 16px 24px; border-top: 1px solid var(--border);
+            display: flex; gap: 10px; justify-content: flex-end;
+            background: #fafafa; border-radius: 0 0 14px 14px; flex-shrink: 0;
+        }
+
+        /* ── Form ── */
+        .form-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .form-grid2 .span2 { grid-column: 1 / -1; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
+        .req { color: var(--danger); }
+        .form-control {
+            width: 100%; padding: 9px 12px; border: 1px solid var(--border);
+            border-radius: 6px; font-size: 14px; outline: none; transition: border .2s; background: #fff;
+        }
+        .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(26,115,232,.1); }
+        .form-control.invalid { border-color: var(--danger); background: #fff8f8; }
+
+        /* ── Alerta ── */
+        .alert {
+            padding: 10px 14px; border-radius: 8px; font-size: 13px;
+            margin-bottom: 14px; display: none;
+        }
+        .alert.show { display: block; }
+        .alert.error   { background: #fce8e6; color: #c5221f; }
+        .alert.success { background: #e6f4ea; color: #1e8e3e; }
+
+        /* ── Spinner ── */
+        .spinner {
+            display: inline-block; width: 15px; height: 15px;
+            border: 2px solid rgba(255,255,255,.4); border-top-color: #fff;
+            border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+            color: #fff; padding: 12px 20px; border-radius: 8px;
+            box-shadow: var(--shadow-lg); font-size: 14px; max-width: 340px;
+            display: none;
+        }
+        .toast.show { display: block; }
+        .toast.success { background: var(--success); }
+        .toast.error   { background: var(--danger); }
+        .toast.info    { background: #333; }
+
+        /* ── Empty state ── */
+        .empty { text-align: center; padding: 40px; color: var(--muted); }
+        .empty-icon { font-size: 36px; margin-bottom: 10px; }
+
+        /* ── Secciones ── */
+        .section { display: none; }
+        .section.active { display: block; }
+
+        /* ── Password strength ── */
+        .pass-hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+        @media (max-width: 700px) {
+            .sidebar { display: none; }
+            .main { margin-left: 0; }
+            .form-grid2 { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header class="header">
+    <div class="header-left">
+        <div class="header-brand">
+            <span style="font-size:20px;">&#9877;</span>
+            UMEDIC
+            <span>Admin</span>
+        </div>
+    </div>
+    <div class="header-right">
+        <div class="admin-chip">
+            <div class="admin-avatar" id="adminAvatar">A</div>
+            <span class="admin-name" id="adminNombre">Administrador</span>
+        </div>
+        <button class="btn-logout" onclick="api.logout()">Cerrar sesi&oacute;n</button>
+    </div>
+</header>
+
+<!-- ── Sidebar ── -->
+<nav class="sidebar">
+    <div class="nav-section-label">Panel</div>
+    <div class="nav-item active" id="navResumen" onclick="mostrarSeccion('resumen')">
+        <span class="nav-icon">&#128200;</span> Resumen
+    </div>
+
+    <div class="nav-section-label">Gesti&oacute;n</div>
+    <div class="nav-item" id="navMedicos" onclick="mostrarSeccion('medicos')">
+        <span class="nav-icon">&#128657;</span> M&eacute;dicos
+        <span class="nav-badge" id="badgeMedicos">0</span>
+    </div>
+    <div class="nav-item" id="navUsuarios" onclick="mostrarSeccion('usuarios')">
+        <span class="nav-icon">&#128101;</span> Usuarios
+        <span class="nav-badge" id="badgeUsuarios">0</span>
+    </div>
+</nav>
+
+<!-- ── Main ── -->
+<main class="main">
+
+    <!-- ──────────────── RESUMEN ──────────────── -->
+    <div class="section active" id="secResumen">
+        <div class="page-header">
+            <div>
+                <div class="page-title">Resumen del sistema</div>
+                <div class="page-sub">Visi&oacute;n general de usuarios y m&eacute;dicos registrados</div>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-icon">&#128101;</div>
+                <div><div class="stat-val" id="statUsuarios">—</div><div class="stat-label">Usuarios totales</div></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">&#128657;</div>
+                <div><div class="stat-val" id="statMedicos">—</div><div class="stat-label">M&eacute;dicos activos</div></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">&#128100;</div>
+                <div><div class="stat-val" id="statPacientes">—</div><div class="stat-label">Pacientes registrados</div></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">&#128683;</div>
+                <div><div class="stat-val" id="statInactivos">—</div><div class="stat-label">Cuentas inactivas</div></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-head"><h3>&#9432; Accesos r&aacute;pidos</h3></div>
+            <div style="padding:20px;display:flex;gap:12px;flex-wrap:wrap;">
+                <button class="btn btn-primary" onclick="mostrarSeccion('medicos')">&#128657; Gestionar m&eacute;dicos</button>
+                <button class="btn btn-secondary" onclick="mostrarSeccion('usuarios')">&#128101; Gestionar usuarios</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ──────────────── MÉDICOS ──────────────── -->
+    <div class="section" id="secMedicos">
+        <div class="page-header">
+            <div>
+                <div class="page-title">&#128657; M&eacute;dicos</div>
+                <div class="page-sub">Registre y administre el equipo m&eacute;dico del centro</div>
+            </div>
+            <button class="btn btn-primary" onclick="abrirModalMedico()">&#43; A&ntilde;adir m&eacute;dico</button>
+        </div>
+
+        <div class="card">
+            <div class="card-head">
+                <h3>Equipo m&eacute;dico registrado</h3>
+                <div class="toolbar" style="margin:0;">
+                    <div class="search-box">
+                        <span>&#128269;</span>
+                        <input type="text" id="searchMedicos" placeholder="Buscar por nombre o especialidad...">
+                    </div>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table id="tablaMedicos">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Nombre</th>
+                            <th>Correo</th>
+                            <th>Especialidad</th>
+                            <th>Biograf&iacute;a</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bodyMedicos">
+                        <tr><td colspan="6"><div class="empty"><div class="empty-icon">&#8987;</div><p>Cargando...</p></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ──────────────── USUARIOS ──────────────── -->
+    <div class="section" id="secUsuarios">
+        <div class="page-header">
+            <div>
+                <div class="page-title">&#128101; Usuarios</div>
+                <div class="page-sub">Gestione roles, permisos y contrase&ntilde;as de todos los usuarios</div>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <div class="search-box">
+                <span>&#128269;</span>
+                <input type="text" id="searchUsuarios" placeholder="Buscar por nombre o correo...">
+            </div>
+            <select class="filter-select" id="filtroRol">
+                <option value="">Todos los roles</option>
+                <option value="patient">Paciente</option>
+                <option value="doctor">M&eacute;dico</option>
+                <option value="admin">Administrador</option>
+            </select>
+            <select class="filter-select" id="filtroEstado">
+                <option value="">Todos los estados</option>
+                <option value="active">Activos</option>
+                <option value="inactive">Inactivos</option>
+            </select>
+        </div>
+
+        <div class="card">
+            <div class="card-head"><h3>Lista de usuarios</h3></div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Correo</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bodyUsuarios">
+                        <tr><td colspan="6"><div class="empty"><div class="empty-icon">&#8987;</div><p>Cargando...</p></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ══ MODAL: Añadir Médico ══ -->
+<div class="modal-overlay" id="overlayMedico">
+    <div class="modal modal-md" role="dialog" aria-modal="true">
+        <div class="modal-header">
+            <h3>&#43; A&ntilde;adir nuevo m&eacute;dico</h3>
+            <button class="modal-close" onclick="cerrar('overlayMedico')" aria-label="Cerrar">&#x2715;</button>
+        </div>
+        <div class="modal-body">
+            <div class="alert" id="alertMedico"></div>
+            <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">
+                Se crear&aacute; una cuenta de usuario con rol <strong>M&eacute;dico</strong> y su perfil m&eacute;dico autom&aacute;ticamente.
+            </p>
+            <div class="form-grid2">
+                <div class="form-group span2">
+                    <label>Nombre completo <span class="req">*</span></label>
+                    <input class="form-control" type="text" id="mNombre" placeholder="Dr. Juan P&eacute;rez">
+                </div>
+                <div class="form-group">
+                    <label>Correo electr&oacute;nico <span class="req">*</span></label>
+                    <input class="form-control" type="email" id="mEmail" placeholder="medico@umedic.com">
+                </div>
+                <div class="form-group">
+                    <label>Contrase&ntilde;a inicial <span class="req">*</span></label>
+                    <input class="form-control" type="password" id="mPassword" placeholder="M&iacute;nimo 6 caracteres">
+                    <div class="pass-hint">El m&eacute;dico puede cambiarla despu&eacute;s</div>
+                </div>
+                <div class="form-group">
+                    <label>Especialidad <span class="req">*</span></label>
+                    <input class="form-control" type="text" id="mEspecialidad" placeholder="Ej: Cardiolog&iacute;a">
+                </div>
+                <div class="form-group">
+                    <label>Biograf&iacute;a / Descripci&oacute;n</label>
+                    <input class="form-control" type="text" id="mBio" placeholder="Breve descripci&oacute;n (opcional)">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="cerrar('overlayMedico')">Cancelar</button>
+            <button class="btn btn-primary" id="btnGuardarMedico" onclick="guardarMedico()">Crear m&eacute;dico</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══ MODAL: Cambiar Contraseña ══ -->
+<div class="modal-overlay" id="overlayPassword">
+    <div class="modal modal-sm" role="dialog" aria-modal="true">
+        <div class="modal-header">
+            <h3>&#128274; Cambiar contrase&ntilde;a</h3>
+            <button class="modal-close" onclick="cerrar('overlayPassword')" aria-label="Cerrar">&#x2715;</button>
+        </div>
+        <div class="modal-body">
+            <div class="alert" id="alertPassword"></div>
+            <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">
+                Usuario: <strong id="passUserNombre">—</strong>
+            </p>
+            <div class="form-group">
+                <label>Nueva contrase&ntilde;a <span class="req">*</span></label>
+                <input class="form-control" type="password" id="nuevaPassword" placeholder="M&iacute;nimo 6 caracteres">
+            </div>
+            <div class="form-group">
+                <label>Confirmar contrase&ntilde;a <span class="req">*</span></label>
+                <input class="form-control" type="password" id="confirmarPassword" placeholder="Repita la contrase&ntilde;a">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="cerrar('overlayPassword')">Cancelar</button>
+            <button class="btn btn-warning" id="btnGuardarPassword" onclick="guardarPassword()">Guardar contrase&ntilde;a</button>
+        </div>
+    </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+// ================================================================
+// Guard y estado
+// ================================================================
+let _autorizado = false;
+(function () {
+    const token = localStorage.getItem('token');
+    if (!token) { window.location.href = 'inicio.html'; return; }
+    try {
+        const p = JSON.parse(atob(token.split('.')[1]));
+        if (p.role !== 'admin') { window.location.href = 'inicio.html'; return; }
+        document.getElementById('adminNombre').textContent = p.sub || 'Admin';
+        document.getElementById('adminAvatar').textContent = (p.sub || 'A')[0].toUpperCase();
+        _autorizado = true;
+    } catch { window.location.href = 'inicio.html'; }
+})();
+
+let todosUsuarios = [];
+let todosMedicos  = [];
+let resetUserId   = null;
+let resetUserNombre = '';
+
+// ================================================================
+// Inicio
+// ================================================================
+async function init() {
+    await Promise.all([cargarUsuarios(), cargarMedicos()]);
+    actualizarResumen();
+    // Filtros en vivo
+    document.getElementById('searchUsuarios').addEventListener('input', renderUsuarios);
+    document.getElementById('filtroRol').addEventListener('change', renderUsuarios);
+    document.getElementById('filtroEstado').addEventListener('change', renderUsuarios);
+    document.getElementById('searchMedicos').addEventListener('input', renderMedicos);
+}
+
+// ================================================================
+// Navegación
+// ================================================================
+function mostrarSeccion(nombre) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('sec' + nombre.charAt(0).toUpperCase() + nombre.slice(1)).classList.add('active');
+    document.getElementById('nav' + nombre.charAt(0).toUpperCase() + nombre.slice(1)).classList.add('active');
+}
+
+// ================================================================
+// Datos
+// ================================================================
+async function cargarUsuarios() {
+    try {
+        todosUsuarios = await api.getUsers();
+        document.getElementById('badgeUsuarios').textContent = todosUsuarios.length;
+        renderUsuarios();
+    } catch { showToast('Error al cargar usuarios.', 'error'); }
+}
+
+async function cargarMedicos() {
+    try {
+        todosMedicos = await api.getDoctors();
+        document.getElementById('badgeMedicos').textContent = todosMedicos.length;
+        renderMedicos();
+    } catch { showToast('Error al cargar m\u00e9dicos.', 'error'); }
+}
+
+function actualizarResumen() {
+    document.getElementById('statUsuarios').textContent  = todosUsuarios.length;
+    document.getElementById('statMedicos').textContent   = todosMedicos.length;
+    document.getElementById('statPacientes').textContent = todosUsuarios.filter(u => u.role === 'patient').length;
+    document.getElementById('statInactivos').textContent = todosUsuarios.filter(u => !u.is_active).length;
+}
+
+// ================================================================
+// Tabla Médicos
+// ================================================================
+function renderMedicos() {
+    const search = document.getElementById('searchMedicos').value.toLowerCase();
+    const lista  = todosMedicos.filter(d => {
+        const nombre = ((d.user && d.user.full_name) || '').toLowerCase();
+        const esp    = (d.specialty || '').toLowerCase();
+        return !search || nombre.includes(search) || esp.includes(search);
+    });
+
+    const tbody = document.getElementById('bodyMedicos');
+    if (!lista.length) {
+        tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="empty-icon">&#128657;</div><p>No hay m\u00e9dicos registrados.</p></div></td></tr>`;
+        return;
+    }
+    tbody.innerHTML = lista.map((d, i) => {
+        const u      = d.user || {};
+        const activo = u.is_active !== false;
+        return `<tr>
+            <td style="color:var(--muted);font-size:12px;">#${d.id}</td>
+            <td style="font-weight:600;">${esc(u.full_name || '—')}</td>
+            <td style="color:var(--muted);">${esc(u.email || '—')}</td>
+            <td><span class="badge badge-doctor">${esc(d.specialty)}</span></td>
+            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;color:var(--muted);">${esc(d.bio || '—')}</td>
+            <td><span class="badge ${activo ? 'badge-active' : 'badge-inactive'}">${activo ? 'Activo' : 'Inactivo'}</span></td>
+        </tr>`;
+    }).join('');
+}
+
+// ================================================================
+// Tabla Usuarios
+// ================================================================
+const ROLES = { patient: 'Paciente', doctor: 'M\u00e9dico', admin: 'Administrador' };
+const ROLES_BADGE = { patient: 'badge-patient', doctor: 'badge-doctor', admin: 'badge-admin' };
+
+function renderUsuarios() {
+    const search = document.getElementById('searchUsuarios').value.toLowerCase();
+    const rol    = document.getElementById('filtroRol').value;
+    const estado = document.getElementById('filtroEstado').value;
+
+    const lista = todosUsuarios.filter(u => {
+        const okTexto  = !search || u.full_name.toLowerCase().includes(search) || u.email.toLowerCase().includes(search);
+        const okRol    = !rol    || u.role === rol;
+        const okEstado = !estado || (estado === 'active' ? u.is_active : !u.is_active);
+        return okTexto && okRol && okEstado;
+    });
+
+    const tbody = document.getElementById('bodyUsuarios');
+    if (!lista.length) {
+        tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="empty-icon">&#128101;</div><p>No hay usuarios que coincidan con los filtros.</p></div></td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = lista.map(u => `
+        <tr>
+            <td style="color:var(--muted);font-size:12px;">#${u.id}</td>
+            <td style="font-weight:600;">${esc(u.full_name)}</td>
+            <td style="color:var(--muted);">${esc(u.email)}</td>
+            <td>
+                <select class="role-select" onchange="cambiarRol(${u.id}, this.value)" title="Cambiar rol">
+                    <option value="patient"  ${u.role === 'patient' ? 'selected' : ''}>Paciente</option>
+                    <option value="doctor"   ${u.role === 'doctor'  ? 'selected' : ''}>M\u00e9dico</option>
+                    <option value="admin"    ${u.role === 'admin'   ? 'selected' : ''}>Administrador</option>
+                </select>
+            </td>
+            <td>
+                <label class="toggle" title="${u.is_active ? 'Desactivar cuenta' : 'Activar cuenta'}">
+                    <input type="checkbox" ${u.is_active ? 'checked' : ''}
+                           onchange="toggleActivo(${u.id}, this.checked)">
+                    <span class="toggle-track"></span>
+                </label>
+            </td>
+            <td>
+                <div class="actions">
+                    <button class="btn btn-warning btn-sm" onclick="abrirModalPassword(${u.id}, '${esc(u.full_name)}')"
+                            title="Cambiar contrase\u00f1a">
+                        &#128274; Contrase\u00f1a
+                    </button>
+                </div>
+            </td>
+        </tr>`).join('');
+}
+
+// ================================================================
+// Acciones de usuarios
+// ================================================================
+async function cambiarRol(userId, nuevoRol) {
+    try {
+        const res = await api.updateUser(userId, { role: nuevoRol });
+        if (res.id) {
+            const idx = todosUsuarios.findIndex(u => u.id === userId);
+            if (idx !== -1) todosUsuarios[idx] = res;
+            actualizarResumen();
+            showToast(`Rol actualizado a "${ROLES[nuevoRol]}".`, 'success');
+        } else {
+            showToast('Error: ' + (res.detail || ''), 'error');
+            await cargarUsuarios(); // revertir
+        }
+    } catch { showToast('Error de conexi\u00f3n.', 'error'); }
+}
+
+async function toggleActivo(userId, activo) {
+    try {
+        const res = await api.updateUser(userId, { is_active: activo });
+        if (res.id) {
+            const idx = todosUsuarios.findIndex(u => u.id === userId);
+            if (idx !== -1) todosUsuarios[idx] = res;
+            actualizarResumen();
+            showToast(`Cuenta ${activo ? 'activada' : 'desactivada'} correctamente.`, 'success');
+        } else {
+            showToast('Error: ' + (res.detail || ''), 'error');
+            await cargarUsuarios();
+        }
+    } catch { showToast('Error de conexi\u00f3n.', 'error'); }
+}
+
+// ================================================================
+// Modal: Cambiar contraseña
+// ================================================================
+function abrirModalPassword(userId, nombre) {
+    resetUserId     = userId;
+    resetUserNombre = nombre;
+    document.getElementById('passUserNombre').textContent = nombre;
+    document.getElementById('nuevaPassword').value     = '';
+    document.getElementById('confirmarPassword').value = '';
+    document.getElementById('alertPassword').className = 'alert';
+    document.getElementById('overlayPassword').classList.add('active');
+    setTimeout(() => document.getElementById('nuevaPassword').focus(), 100);
+}
+
+async function guardarPassword() {
+    const nueva      = document.getElementById('nuevaPassword').value;
+    const confirmar  = document.getElementById('confirmarPassword').value;
+    const alertEl    = document.getElementById('alertPassword');
+
+    if (!nueva || nueva.length < 6) {
+        alertEl.textContent = 'La contrase\u00f1a debe tener al menos 6 caracteres.';
+        alertEl.className   = 'alert error show'; return;
+    }
+    if (nueva !== confirmar) {
+        alertEl.textContent = 'Las contrase\u00f1as no coinciden.';
+        alertEl.className   = 'alert error show'; return;
+    }
+
+    const btn = document.getElementById('btnGuardarPassword');
+    btn.innerHTML = '<span class="spinner"></span> Guardando...';
+    btn.disabled  = true;
+    alertEl.className = 'alert';
+
+    try {
+        const res = await api.resetPassword(resetUserId, nueva);
+        if (res.message) {
+            showToast(res.message, 'success');
+            cerrar('overlayPassword');
+        } else {
+            alertEl.textContent = res.detail || 'Error al cambiar contrase\u00f1a.';
+            alertEl.className   = 'alert error show';
+        }
+    } catch {
+        alertEl.textContent = 'Error de conexi\u00f3n.';
+        alertEl.className   = 'alert error show';
+    } finally {
+        btn.innerHTML = 'Guardar contrase\u00f1a';
+        btn.disabled  = false;
+    }
+}
+
+// ================================================================
+// Modal: Añadir Médico
+// ================================================================
+function abrirModalMedico() {
+    ['mNombre','mEmail','mPassword','mEspecialidad','mBio'].forEach(id => {
+        document.getElementById(id).value = '';
+        document.getElementById(id).classList.remove('invalid');
+    });
+    document.getElementById('alertMedico').className = 'alert';
+    document.getElementById('overlayMedico').classList.add('active');
+    setTimeout(() => document.getElementById('mNombre').focus(), 100);
+}
+
+async function guardarMedico() {
+    const campos = ['mNombre','mEmail','mPassword','mEspecialidad'];
+    let valido = true;
+    campos.forEach(id => {
+        const el = document.getElementById(id);
+        const vacio = !el.value.trim();
+        el.classList.toggle('invalid', vacio);
+        if (vacio) valido = false;
+    });
+    if (!valido) { return; }
+
+    const pw = document.getElementById('mPassword').value;
+    if (pw.length < 6) {
+        document.getElementById('mPassword').classList.add('invalid');
+        const a = document.getElementById('alertMedico');
+        a.textContent = 'La contrase\u00f1a debe tener al menos 6 caracteres.';
+        a.className   = 'alert error show'; return;
+    }
+
+    const btn = document.getElementById('btnGuardarMedico');
+    btn.innerHTML = '<span class="spinner"></span> Creando...';
+    btn.disabled  = true;
+    document.getElementById('alertMedico').className = 'alert';
+
+    try {
+        const res = await api.createDoctor({
+            full_name:  document.getElementById('mNombre').value.trim(),
+            email:      document.getElementById('mEmail').value.trim(),
+            password:   pw,
+            specialty:  document.getElementById('mEspecialidad').value.trim(),
+            bio:        document.getElementById('mBio').value.trim() || null,
+        });
+
+        if (res.id) {
+            showToast(`M\u00e9dico "${res.user.full_name}" creado correctamente.`, 'success');
+            cerrar('overlayMedico');
+            await cargarMedicos();
+            await cargarUsuarios();
+            actualizarResumen();
+        } else {
+            const a = document.getElementById('alertMedico');
+            a.textContent = 'Error: ' + (res.detail || 'No se pudo crear el m\u00e9dico.');
+            a.className   = 'alert error show';
+        }
+    } catch {
+        const a = document.getElementById('alertMedico');
+        a.textContent = 'Error de conexi\u00f3n.';
+        a.className   = 'alert error show';
+    } finally {
+        btn.innerHTML = 'Crear m\u00e9dico';
+        btn.disabled  = false;
+    }
+}
+
+// ================================================================
+// Utilidades
+// ================================================================
+function cerrar(id) { document.getElementById(id).classList.remove('active'); }
+document.querySelectorAll('.modal-overlay').forEach(o => {
+    o.addEventListener('click', e => { if (e.target === o) cerrar(o.id); });
+});
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape')
+        document.querySelectorAll('.modal-overlay.active').forEach(o => cerrar(o.id));
+});
+
+function esc(s) {
+    return String(s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+let _toastT;
+function showToast(msg, tipo = 'info') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className   = `toast show ${tipo}`;
+    clearTimeout(_toastT);
+    _toastT = setTimeout(() => t.classList.remove('show'), 3800);
+}
+
+// ================================================================
+// Inicio
+// ================================================================
+if (_autorizado) init();
+</script>
+</body>
+</html>

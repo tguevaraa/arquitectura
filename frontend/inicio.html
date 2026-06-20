@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UMEDIC - Unidad Médica Central</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            background: #f1f3f4;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Hero ── */
+        .hero {
+            background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
+            color: #fff;
+            text-align: center;
+            padding: 56px 24px 48px;
+        }
+        .hero-icon  { font-size: 52px; margin-bottom: 16px; line-height: 1; }
+        .hero-title { font-size: 36px; font-weight: 800; letter-spacing: -.5px; margin-bottom: 8px; }
+        .hero-sub   { font-size: 16px; opacity: .85; max-width: 480px; margin: 0 auto; line-height: 1.6; }
+
+        /* ── Cards ── */
+        .cards-section {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 24px;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            max-width: 980px;
+            width: 100%;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,.08);
+            padding: 36px 28px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            transition: transform .2s, box-shadow .2s;
+            border-top: 4px solid transparent;
+            text-decoration: none;
+            color: inherit;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 28px rgba(0,0,0,.14);
+        }
+        .card.patient { border-top-color: #34a853; }
+        .card.staff   { border-top-color: #1a73e8; }
+        .card.admin   { border-top-color: #ea4335; }
+
+        .card-icon {
+            width: 60px; height: 60px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px; margin-bottom: 20px; flex-shrink: 0;
+        }
+        .card.patient .card-icon { background: #e6f4ea; }
+        .card.staff   .card-icon { background: #e8f0fe; }
+        .card.admin   .card-icon { background: #fce8e6; }
+
+        .card-tag {
+            font-size: 10px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: .8px; margin-bottom: 6px;
+        }
+        .card.patient .card-tag { color: #34a853; }
+        .card.staff   .card-tag { color: #1a73e8; }
+        .card.admin   .card-tag { color: #ea4335; }
+
+        .card-title { font-size: 20px; font-weight: 800; margin-bottom: 10px; color: #202124; }
+        .card-desc  { font-size: 14px; color: #5f6368; line-height: 1.6; flex: 1; }
+
+        .card-features {
+            list-style: none; margin: 18px 0 24px;
+            display: flex; flex-direction: column; gap: 7px;
+        }
+        .card-features li {
+            font-size: 13px; color: #444;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .card-features li::before { content: '✓'; font-weight: 700; font-size: 12px; }
+        .card.patient .card-features li::before { color: #34a853; }
+        .card.staff   .card-features li::before { color: #1a73e8; }
+        .card.admin   .card-features li::before { color: #ea4335; }
+
+        .card-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 11px 22px; border-radius: 8px; border: none;
+            font-size: 14px; font-weight: 700; cursor: pointer;
+            transition: all .2s; text-decoration: none; width: 100%;
+            justify-content: center;
+        }
+        .card.patient .card-btn { background: #34a853; color: #fff; }
+        .card.patient .card-btn:hover { background: #2d8f47; }
+        .card.staff   .card-btn { background: #1a73e8; color: #fff; }
+        .card.staff   .card-btn:hover { background: #1557b0; }
+        .card.admin   .card-btn { background: #ea4335; color: #fff; }
+        .card.admin   .card-btn:hover { background: #c5221f; }
+
+        /* ── Footer ── */
+        footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: #999;
+            border-top: 1px solid #e0e0e0;
+            background: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hero">
+        <div class="hero-icon">&#9877;</div>
+        <div class="hero-title">UMEDIC</div>
+        <div class="hero-sub">Unidad M&eacute;dica Central &mdash; Sistema Integral de Gesti&oacute;n M&eacute;dica</div>
+    </div>
+
+    <div class="cards-section">
+        <div class="cards-grid">
+
+            <!-- Paciente -->
+            <a class="card patient" href="paciente.html">
+                <div class="card-icon">&#128100;</div>
+                <div class="card-tag">Acceso para pacientes</div>
+                <div class="card-title">Soy Paciente</div>
+                <div class="card-desc">Gestione sus citas m&eacute;dicas de forma sencilla y segura desde cualquier dispositivo.</div>
+                <ul class="card-features">
+                    <li>Agendar nuevas citas</li>
+                    <li>Cancelar o reagendar con 24h de anticipaci&oacute;n</li>
+                    <li>Ver historial de atenciones</li>
+                    <li>Verificaci&oacute;n de identidad por correo</li>
+                </ul>
+                <span class="card-btn">Ingresar al portal &rarr;</span>
+            </a>
+
+            <!-- Personal médico / administrativo -->
+            <a class="card staff" href="index.html">
+                <div class="card-icon">&#128203;</div>
+                <div class="card-tag">Personal m&eacute;dico y administrativo</div>
+                <div class="card-title">Personal de Salud</div>
+                <div class="card-desc">Panel completo para la gesti&oacute;n de atenciones, turnos, reportes y control de citas.</div>
+                <ul class="card-features">
+                    <li>Panel de atenciones en tiempo real</li>
+                    <li>Filtros por estado, fecha y m&eacute;dico</li>
+                    <li>Exportar reportes a Excel</li>
+                    <li>Gesti&oacute;n de turnos y estados</li>
+                </ul>
+                <span class="card-btn">Iniciar sesi&oacute;n &rarr;</span>
+            </a>
+
+            <!-- Administrador -->
+            <a class="card admin" href="admin.html">
+                <div class="card-icon">&#9881;</div>
+                <div class="card-tag">Administrador del sistema</div>
+                <div class="card-title">Administrador</div>
+                <div class="card-desc">Configuraci&oacute;n avanzada del sistema: usuarios, m&eacute;dicos, roles y accesos.</div>
+                <ul class="card-features">
+                    <li>Registrar y gestionar m&eacute;dicos</li>
+                    <li>Cambiar roles y permisos de usuarios</li>
+                    <li>Restablecer contrase&ntilde;as de cuentas</li>
+                    <li>Activar o desactivar usuarios</li>
+                </ul>
+                <span class="card-btn">Panel administrativo &rarr;</span>
+            </a>
+
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2025 Unidad M&eacute;dica Central &mdash; Todos los derechos reservados.
+    </footer>
+
+</body>
+</html>

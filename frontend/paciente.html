@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal del Paciente - UMEDIC</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #f1f3f4;
+            color: #202124;
+            font-size: 14px;
+            min-height: 100vh;
+        }
+
+        /* ── Variables ── */
+        :root {
+            --primary:      #1a73e8;
+            --primary-dark: #1557b0;
+            --success:      #34a853;
+            --warning:      #f9ab00;
+            --danger:       #ea4335;
+            --border:       #e0e0e0;
+            --muted:        #5f6368;
+            --shadow:       0 1px 4px rgba(0,0,0,.12);
+            --shadow-lg:    0 4px 20px rgba(0,0,0,.15);
+            --radius:       10px;
+        }
+
+        /* ══════════════════════════════════
+           PASOS DE AUTENTICACIÓN
+        ══════════════════════════════════ */
+        .auth-screen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: linear-gradient(135deg, #e8f0fe 0%, #f1f3f4 60%);
+        }
+
+        .auth-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            padding: 40px 36px;
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .auth-logo {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .auth-logo-icon { font-size: 42px; }
+        .auth-logo-title { font-size: 22px; font-weight: 700; color: var(--primary); margin-top: 6px; }
+        .auth-logo-sub   { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+        .step-label {
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: .6px; color: var(--muted); margin-bottom: 6px;
+        }
+        .step-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+        .step-desc  { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
+        .form-control {
+            width: 100%; padding: 10px 14px;
+            border: 1px solid var(--border); border-radius: 8px;
+            font-size: 14px; outline: none; transition: border .2s;
+        }
+        .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(26,115,232,.12); }
+        .form-control.invalid { border-color: var(--danger); background: #fff8f8; }
+
+        .btn-full {
+            width: 100%; padding: 12px;
+            background: var(--primary); color: #fff;
+            border: none; border-radius: 8px;
+            font-size: 15px; font-weight: 700;
+            cursor: pointer; transition: background .2s;
+        }
+        .btn-full:hover    { background: var(--primary-dark); }
+        .btn-full:disabled { opacity: .6; cursor: not-allowed; }
+
+        .link-btn {
+            background: none; border: none; color: var(--primary);
+            font-size: 13px; cursor: pointer; padding: 0;
+            text-decoration: underline;
+        }
+        .link-btn:hover { color: var(--primary-dark); }
+
+        /* Alerta */
+        .alert {
+            padding: 10px 14px; border-radius: 8px; font-size: 13px;
+            margin-bottom: 16px; display: none; line-height: 1.5;
+        }
+        .alert.show { display: block; }
+        .alert.error   { background: #fce8e6; color: #c5221f; border: 1px solid #f5c6c2; }
+        .alert.success { background: #e6f4ea; color: #1e8e3e; border: 1px solid #b7dfbf; }
+        .alert.info    { background: #e8f0fe; color: #1a73e8; border: 1px solid #c5d8fb; }
+
+        /* ── Inputs de código ── */
+        .code-inputs {
+            display: flex; gap: 8px; justify-content: center; margin: 20px 0;
+        }
+        .code-digit {
+            width: 46px; height: 56px;
+            border: 2px solid var(--border); border-radius: 8px;
+            text-align: center; font-size: 22px; font-weight: 700;
+            outline: none; transition: border .2s; color: var(--primary);
+        }
+        .code-digit:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(26,115,232,.15); }
+        .code-digit.filled { border-color: var(--primary); background: #e8f0fe; }
+
+        /* Timer */
+        .timer-row { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; font-size: 13px; }
+        .timer { color: var(--muted); }
+        .timer.urgent { color: var(--danger); font-weight: 700; }
+
+        /* Spinner */
+        .spinner {
+            display: inline-block; width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,.4); border-top-color: #fff;
+            border-radius: 50%; animation: spin .7s linear infinite;
+            vertical-align: middle; margin-right: 6px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ══════════════════════════════════
+           PORTAL DEL PACIENTE (DASHBOARD)
+        ══════════════════════════════════ */
+        #portalScreen { display: none; }
+
+        .portal-header {
+            background: var(--primary); color: #fff;
+            height: 56px; padding: 0 24px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,.2);
+        }
+        .portal-brand { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .portal-brand-sub { font-size: 12px; font-weight: 400; opacity: .75; }
+        .portal-user { display: flex; align-items: center; gap: 12px; }
+        .portal-avatar {
+            width: 30px; height: 30px; border-radius: 50%;
+            background: rgba(255,255,255,.25); display: flex;
+            align-items: center; justify-content: center; font-weight: 700; font-size: 13px;
+        }
+        .portal-name { font-size: 13px; }
+        .btn-logout-portal {
+            background: rgba(255,255,255,.15); border: none; color: #fff;
+            padding: 6px 14px; border-radius: 6px; cursor: pointer;
+            font-size: 13px; font-weight: 500; transition: background .2s;
+        }
+        .btn-logout-portal:hover { background: rgba(255,255,255,.28); }
+
+        .portal-main { padding: 24px; max-width: 1000px; margin: 0 auto; }
+
+        /* Tarjeta de sección */
+        .card {
+            background: #fff; border-radius: var(--radius);
+            box-shadow: var(--shadow); overflow: hidden; margin-bottom: 20px;
+        }
+        .card-header {
+            padding: 16px 20px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            background: #fafafa;
+        }
+        .card-header h2 { font-size: 15px; font-weight: 700; }
+        .card-body { padding: 0; }
+
+        /* Tabla */
+        table { width: 100%; border-collapse: collapse; }
+        thead th {
+            background: #f8f9fa; color: var(--muted); font-size: 11px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: .5px;
+            padding: 10px 16px; text-align: left; border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+        tbody tr { transition: background .12s; }
+        tbody tr:hover { background: #f8fbff; }
+        tbody td { padding: 12px 16px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+        tbody tr:last-child td { border-bottom: none; }
+
+        /* Badges */
+        .badge {
+            display: inline-block; padding: 3px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: 700;
+        }
+        .badge-agendada  { background: #e8f0fe; color: #1a73e8; }
+        .badge-cerrada   { background: #e6f4ea; color: #1e8e3e; }
+        .badge-cancelada { background: #fce8e6; color: #c5221f; }
+
+        /* Botones de acción en tabla */
+        .btn { display: inline-flex; align-items: center; gap: 5px; padding: 6px 14px; border-radius: 6px; border: none; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .2s; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .btn-primary  { background: var(--primary); color: #fff; }
+        .btn-primary:hover  { background: var(--primary-dark); }
+        .btn-danger   { background: #fce8e6; color: var(--danger); border: 1px solid #f5c6c2; }
+        .btn-danger:hover   { background: var(--danger); color: #fff; }
+        .btn-secondary { background: #f1f3f4; color: #202124; border: 1px solid var(--border); }
+        .btn-secondary:hover { background: #e0e0e0; }
+        .btn:disabled { opacity: .4; cursor: not-allowed; pointer-events: none; }
+
+        .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+        /* Estado vacío */
+        .empty-state { text-align: center; padding: 48px 20px; color: var(--muted); }
+        .empty-icon  { font-size: 40px; margin-bottom: 12px; }
+
+        /* ── Modales ── */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,.45); z-index: 1000;
+            align-items: center; justify-content: center;
+            padding: 20px; backdrop-filter: blur(3px);
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: #fff; border-radius: 14px;
+            box-shadow: 0 20px 60px rgba(0,0,0,.25);
+            width: 100%; max-height: 90vh;
+            display: flex; flex-direction: column;
+            animation: mIn .2s ease;
+        }
+        @keyframes mIn { from { opacity:0; transform: translateY(-14px) scale(.97); } to { opacity:1; transform: none; } }
+        .modal-md { max-width: 500px; }
+        .modal-header { padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: #fafafa; border-radius: 14px 14px 0 0; }
+        .modal-header h3 { font-size: 16px; font-weight: 700; }
+        .modal-close { background: none; border: none; font-size: 18px; cursor: pointer; color: var(--muted); width: 32px; height: 32px; border-radius: 5px; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+        .modal-close:hover { background: #f1f3f4; }
+        .modal-body { padding: 24px; overflow-y: auto; }
+        .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; background: #fafafa; border-radius: 0 0 14px 14px; }
+
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .form-group-m { margin-bottom: 14px; }
+        .form-group-m label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
+        .form-group-m .req { color: var(--danger); }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+            color: #fff; padding: 12px 20px; border-radius: 8px;
+            box-shadow: var(--shadow-lg); font-size: 14px; max-width: 340px;
+            display: none; animation: tIn .25s ease;
+        }
+        .toast.show { display: block; }
+        .toast.success { background: var(--success); }
+        .toast.error   { background: var(--danger); }
+        @keyframes tIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: none; } }
+
+        /* Aviso 24h */
+        .aviso-24h {
+            background: #fff8e1; border: 1px solid #fce8a4; border-radius: 8px;
+            padding: 10px 14px; font-size: 13px; color: #7a5c00;
+            margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+        }
+
+        @media (max-width: 600px) {
+            .auth-card  { padding: 28px 20px; }
+            .form-row   { grid-template-columns: 1fr; }
+            .portal-main { padding: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     PASO 1: INICIO DE SESIÓN
+══════════════════════════════════════════════════ -->
+<div id="loginScreen" class="auth-screen">
+    <div class="auth-card">
+        <div class="auth-logo">
+            <div class="auth-logo-icon">&#9877;</div>
+            <div class="auth-logo-title">UMEDIC</div>
+            <div class="auth-logo-sub">Portal del Paciente</div>
+        </div>
+
+        <div class="step-label">Paso 1 de 2</div>
+        <div class="step-title">Iniciar sesi&oacute;n</div>
+        <div class="step-desc">Ingrese sus credenciales para continuar.</div>
+
+        <div class="alert" id="alertLogin"></div>
+
+        <form id="loginForm" novalidate>
+            <div class="form-group">
+                <label>Correo electr&oacute;nico</label>
+                <input class="form-control" type="email" id="loginEmail"
+                       placeholder="usuario@correo.com" autocomplete="email" required>
+            </div>
+            <div class="form-group">
+                <label>Contrase&ntilde;a</label>
+                <input class="form-control" type="password" id="loginPassword"
+                       placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="current-password" required>
+            </div>
+            <button type="submit" class="btn-full" id="btnLogin">Continuar</button>
+        </form>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PASO 2: VERIFICACIÓN DE CÓDIGO
+══════════════════════════════════════════════════ -->
+<div id="verifyScreen" class="auth-screen" style="display:none;">
+    <div class="auth-card">
+        <div class="auth-logo">
+            <div class="auth-logo-icon">&#128274;</div>
+            <div class="auth-logo-title">Verificaci&oacute;n</div>
+        </div>
+
+        <div class="step-label">Paso 2 de 2</div>
+        <div class="step-title">C&oacute;digo de verificaci&oacute;n</div>
+        <div class="step-desc" id="verifyDesc">
+            Se ha enviado un c&oacute;digo de 6 d&iacute;gitos a su correo electr&oacute;nico.
+        </div>
+
+        <div class="alert info show" id="alertCorreo">
+            &#128139; Si no tiene SMTP configurado, el c&oacute;digo aparece en la consola del servidor.
+        </div>
+
+        <div class="alert" id="alertVerify"></div>
+
+        <!-- Inputs de d&iacute;gitos -->
+        <div class="code-inputs" id="codeInputs">
+            <input class="code-digit" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input class="code-digit" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input class="code-digit" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input class="code-digit" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input class="code-digit" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input class="code-digit" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]">
+        </div>
+
+        <button class="btn-full" id="btnVerify" onclick="verificarCodigo()">Verificar</button>
+
+        <div class="timer-row">
+            <span class="timer" id="timer">Expira en 10:00</span>
+            <button class="link-btn" id="btnReenviar" onclick="reenviarCodigo()">
+                Reenviar c&oacute;digo
+            </button>
+        </div>
+
+        <div style="margin-top:16px;text-align:center;">
+            <button class="link-btn" onclick="volverAlLogin()">&#8592; Volver al inicio de sesi&oacute;n</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PORTAL DEL PACIENTE
+══════════════════════════════════════════════════ -->
+<div id="portalScreen">
+    <header class="portal-header">
+        <div class="portal-brand">
+            <span style="font-size:20px;">&#9877;</span>
+            UMEDIC
+            <span class="portal-brand-sub">Portal del Paciente</span>
+        </div>
+        <div class="portal-user">
+            <div class="portal-avatar" id="portalAvatar">P</div>
+            <span class="portal-name" id="portalNombre">Paciente</span>
+            <button class="btn-logout-portal" onclick="api.patientLogout()">Cerrar sesi&oacute;n</button>
+        </div>
+    </header>
+
+    <div class="portal-main">
+        <!-- Mis Citas -->
+        <div class="card">
+            <div class="card-header">
+                <h2>&#128197; Mis Citas</h2>
+                <button class="btn btn-primary btn-sm" onclick="abrirModalNuevaCita()">
+                    &#43; Nueva cita
+                </button>
+            </div>
+            <div class="card-body">
+                <table id="tablaCitas">
+                    <thead>
+                        <tr>
+                            <th>C&oacute;digo</th>
+                            <th>Fecha</th>
+                            <th>Hora</th>
+                            <th>M&eacute;dico</th>
+                            <th>Motivo</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaCitas">
+                        <tr><td colspan="7">
+                            <div class="empty-state">
+                                <div style="width:32px;height:32px;border:3px solid #ddd;border-top-color:#1a73e8;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px;"></div>
+                                <p>Cargando citas...</p>
+                            </div>
+                        </td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Aviso de pol&iacute;tica -->
+        <div class="aviso-24h">
+            <span style="font-size:18px;">&#8987;</span>
+            <span>
+                <strong>Pol&iacute;tica de modificaci&oacute;n:</strong>
+                Solo puede cancelar o reagendar una cita con al menos <strong>24 horas de anticipaci&oacute;n</strong>.
+                Las citas con menos de 24h quedar&aacute;n bloqueadas.
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ══ MODAL: Nueva Cita ══ -->
+<div class="modal-overlay" id="overlayNueva">
+    <div class="modal modal-md" role="dialog" aria-modal="true">
+        <div class="modal-header">
+            <h3>Nueva cita m&eacute;dica</h3>
+            <button class="modal-close" onclick="cerrarModal('overlayNueva')" aria-label="Cerrar">&#x2715;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group-m">
+                <label>M&eacute;dico <span class="req">*</span></label>
+                <select class="form-control" id="nMedico" required>
+                    <option value="">&#8212; Seleccionar m&eacute;dico &#8212;</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <div class="form-group-m">
+                    <label>Fecha <span class="req">*</span></label>
+                    <input class="form-control" type="date" id="nFecha" required>
+                </div>
+                <div class="form-group-m">
+                    <label>Hora <span class="req">*</span></label>
+                    <input class="form-control" type="time" id="nHora" required>
+                </div>
+            </div>
+            <div class="form-group-m">
+                <label>Motivo de la consulta <span class="req">*</span></label>
+                <textarea class="form-control" id="nMotivo" rows="3"
+                    placeholder="Describa brevemente el motivo de su visita..." required></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="cerrarModal('overlayNueva')">Cancelar</button>
+            <button class="btn btn-primary" id="btnAgendar" onclick="agendarCita()">Agendar cita</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══ MODAL: Reagendar ══ -->
+<div class="modal-overlay" id="overlayReagendar">
+    <div class="modal modal-md" role="dialog" aria-modal="true">
+        <div class="modal-header">
+            <h3>Reagendar cita</h3>
+            <button class="modal-close" onclick="cerrarModal('overlayReagendar')" aria-label="Cerrar">&#x2715;</button>
+        </div>
+        <div class="modal-body">
+            <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">
+                Seleccione la nueva fecha y hora para su cita. El m&eacute;dico asignado se mantiene.
+            </p>
+            <div class="form-row">
+                <div class="form-group-m">
+                    <label>Nueva fecha <span class="req">*</span></label>
+                    <input class="form-control" type="date" id="rFecha" required>
+                </div>
+                <div class="form-group-m">
+                    <label>Nueva hora <span class="req">*</span></label>
+                    <input class="form-control" type="time" id="rHora" required>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="cerrarModal('overlayReagendar')">Cancelar</button>
+            <button class="btn btn-primary" id="btnReagendar" onclick="confirmarReagendar()">Confirmar reagenda</button>
+        </div>
+    </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+// ================================================================
+// Estado
+// ================================================================
+let emailActual   = '';
+let citasData     = [];
+let mapamedicos   = {};
+let reagendandoId = null;
+let timerInterval = null;
+let segundosTimer = 600; // 10 minutos
+
+// ================================================================
+// PASO 1 — LOGIN
+// ================================================================
+document.getElementById('loginForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const email    = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const btn      = document.getElementById('btnLogin');
+
+    if (!email || !password) {
+        alerta('loginScreen', 'Complete su correo y contrase\u00f1a.', 'error');
+        return;
+    }
+
+    btn.innerHTML = '<span class="spinner"></span> Enviando c\u00f3digo...';
+    btn.disabled  = true;
+    ocultarAlerta('loginScreen');
+
+    try {
+        const res = await api.patientLogin(email, password);
+        if (res.message) {
+            emailActual = email;
+            document.getElementById('verifyDesc').textContent =
+                `C\u00f3digo enviado a ${email}. Revise su bandeja de entrada.`;
+            mostrarPantalla('verifyScreen');
+            iniciarTimer();
+            document.querySelector('.code-digit').focus();
+        } else {
+            alerta('loginScreen', res.detail || 'Error al iniciar sesi\u00f3n.', 'error');
+        }
+    } catch {
+        alerta('loginScreen', 'No se pudo conectar con el servidor.', 'error');
+    } finally {
+        btn.innerHTML = 'Continuar';
+        btn.disabled  = false;
+    }
+});
+
+// ================================================================
+// PASO 2 — VERIFICACIÓN DE CÓDIGO
+// ================================================================
+
+// Comportamiento de los inputs de dígitos
+document.querySelectorAll('.code-digit').forEach((inp, i, all) => {
+    inp.addEventListener('input', () => {
+        inp.value = inp.value.replace(/\D/g, '').slice(-1);
+        inp.classList.toggle('filled', inp.value !== '');
+        if (inp.value && i < all.length - 1) all[i + 1].focus();
+        // Auto-verificar si todos llenos
+        if ([...all].every(d => d.value)) verificarCodigo();
+    });
+
+    inp.addEventListener('keydown', e => {
+        if (e.key === 'Backspace' && !inp.value && i > 0) {
+            all[i - 1].value = '';
+            all[i - 1].classList.remove('filled');
+            all[i - 1].focus();
+        }
+        if (e.key === 'ArrowLeft'  && i > 0)              all[i - 1].focus();
+        if (e.key === 'ArrowRight' && i < all.length - 1) all[i + 1].focus();
+    });
+
+    inp.addEventListener('paste', e => {
+        e.preventDefault();
+        const texto = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
+        [...texto.slice(0, 6)].forEach((c, j) => {
+            if (all[j]) { all[j].value = c; all[j].classList.add('filled'); }
+        });
+        if (all[Math.min(texto.length, 5)]) all[Math.min(texto.length, 5)].focus();
+    });
+});
+
+function obtenerCodigo() {
+    return [...document.querySelectorAll('.code-digit')].map(d => d.value).join('');
+}
+
+function limpiarCodigo() {
+    document.querySelectorAll('.code-digit').forEach(d => {
+        d.value = ''; d.classList.remove('filled');
+    });
+    document.querySelector('.code-digit').focus();
+}
+
+async function verificarCodigo() {
+    const codigo = obtenerCodigo();
+    if (codigo.length < 6) { alerta('verifyScreen', 'Ingrese los 6 d\u00edgitos del c\u00f3digo.', 'error'); return; }
+
+    const btn = document.getElementById('btnVerify');
+    btn.innerHTML = '<span class="spinner"></span> Verificando...';
+    btn.disabled  = true;
+    ocultarAlerta('verifyScreen');
+
+    try {
+        const res = await api.verifyCode(emailActual, codigo);
+        if (res.access_token) {
+            detenerTimer();
+            mostrarPortal();
+        } else {
+            alerta('verifyScreen', res.detail || 'C\u00f3digo incorrecto.', 'error');
+            limpiarCodigo();
+        }
+    } catch {
+        alerta('verifyScreen', 'Error de conexi\u00f3n.', 'error');
+    } finally {
+        btn.innerHTML = 'Verificar';
+        btn.disabled  = false;
+    }
+}
+
+async function reenviarCodigo() {
+    const btnR = document.getElementById('btnReenviar');
+    btnR.disabled = true;
+    btnR.textContent = 'Enviando...';
+    ocultarAlerta('verifyScreen');
+
+    try {
+        const email    = emailActual;
+        const password = document.getElementById('loginPassword').value;
+        const res = await api.patientLogin(email, password);
+        if (res.message) {
+            detenerTimer();
+            segundosTimer = 600;
+            iniciarTimer();
+            limpiarCodigo();
+            alerta('verifyScreen', 'C\u00f3digo reenviado correctamente.', 'success');
+        } else {
+            alerta('verifyScreen', res.detail || 'Error al reenviar.', 'error');
+        }
+    } catch {
+        alerta('verifyScreen', 'Error de conexi\u00f3n.', 'error');
+    } finally {
+        setTimeout(() => { btnR.disabled = false; btnR.textContent = 'Reenviar c\u00f3digo'; }, 30000);
+    }
+}
+
+function volverAlLogin() {
+    detenerTimer();
+    limpiarCodigo();
+    ocultarAlerta('loginScreen');
+    ocultarAlerta('verifyScreen');
+    mostrarPantalla('loginScreen');
+}
+
+// Timer cuenta regresiva
+function iniciarTimer() {
+    const el = document.getElementById('timer');
+    timerInterval = setInterval(() => {
+        segundosTimer--;
+        const m = String(Math.floor(segundosTimer / 60)).padStart(2, '0');
+        const s = String(segundosTimer % 60).padStart(2, '0');
+        el.textContent = `Expira en ${m}:${s}`;
+        el.classList.toggle('urgent', segundosTimer <= 60);
+        if (segundosTimer <= 0) {
+            detenerTimer();
+            el.textContent = 'C\u00f3digo expirado';
+            alerta('verifyScreen', 'El c\u00f3digo ha expirado. Solicite uno nuevo.', 'error');
+        }
+    }, 1000);
+}
+
+function detenerTimer() {
+    clearInterval(timerInterval);
+}
+
+// ================================================================
+// PORTAL DEL PACIENTE
+// ================================================================
+async function mostrarPortal() {
+    document.getElementById('loginScreen').style.display  = 'none';
+    document.getElementById('verifyScreen').style.display = 'none';
+    document.getElementById('portalScreen').style.display = 'block';
+
+    // Info del usuario desde JWT
+    try {
+        const payload = JSON.parse(atob(localStorage.getItem('token').split('.')[1]));
+        const correo  = payload.sub || 'Paciente';
+        document.getElementById('portalNombre').textContent = correo;
+        document.getElementById('portalAvatar').textContent = correo[0].toUpperCase();
+    } catch {}
+
+    await cargarMedicos();
+    await cargarCitas();
+}
+
+async function cargarMedicos() {
+    try {
+        const lista = await api.getDoctors();
+        lista.forEach(d => {
+            mapamedicos[d.id] = d.user ? `${d.user.full_name} (${d.specialty})` : `M\u00e9dico ID ${d.id}`;
+        });
+        const sel = document.getElementById('nMedico');
+        lista.forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d.id;
+            opt.textContent = mapamedicos[d.id];
+            sel.appendChild(opt);
+        });
+    } catch {
+        showToast('No se pudieron cargar los m\u00e9dicos.', 'error');
+    }
+}
+
+async function cargarCitas() {
+    try {
+        citasData = await api.getAppointments();
+        renderCitas();
+    } catch {
+        document.getElementById('listaCitas').innerHTML =
+            `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">&#9888;</div><p>Error al cargar las citas.</p></div></td></tr>`;
+    }
+}
+
+function puedeModificar(appt) {
+    if (appt.status !== 'scheduled') return false;
+    const ahora   = new Date();
+    const citaDt  = new Date(appt.appointment_datetime);
+    const horasRestantes = (citaDt - ahora) / 36e5;
+    return horasRestantes >= 24;
+}
+
+function badge(status) {
+    const M = { scheduled: ['Agendada','badge-agendada'], completed: ['Cerrada','badge-cerrada'], cancelled: ['Cancelada','badge-cancelada'] };
+    const [l, c] = M[status] || ['Pendiente', 'badge-agendada'];
+    return `<span class="badge ${c}">${l}</span>`;
+}
+
+function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderCitas() {
+    const tbody = document.getElementById('listaCitas');
+    if (!citasData.length) {
+        tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">&#128197;</div><p>No tiene citas registradas.<br>Use el bot&oacute;n <strong>+ Nueva cita</strong> para agendar.</p></div></td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = citasData.map(a => {
+        const dt    = new Date(a.appointment_datetime);
+        const fecha = dt.toLocaleDateString('es-EC');
+        const hora  = dt.toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' });
+        const medico = esc(mapamedicos[a.doctor_id] || `ID ${a.doctor_id}`);
+        const puede  = puedeModificar(a);
+        const codigo = `ATN-${String(a.id).padStart(4,'0')}`;
+        const motivo = a.notes ? (a.notes.length > 40 ? esc(a.notes.slice(0,40)) + '&hellip;' : esc(a.notes)) : '&mdash;';
+        const tooltipBloqueado = !puede && a.status === 'scheduled'
+            ? 'title="No se puede modificar: faltan menos de 24 horas"' : '';
+
+        const botones = a.status === 'scheduled'
+            ? `<div class="actions">
+                 <button class="btn btn-secondary btn-sm" onclick="abrirReagendar(${a.id})"
+                   ${!puede ? 'disabled' : ''} ${tooltipBloqueado}>
+                   &#8635; Reagendar
+                 </button>
+                 <button class="btn btn-danger btn-sm" onclick="cancelarCita(${a.id})"
+                   ${!puede ? 'disabled' : ''} ${tooltipBloqueado}>
+                   &#x2715; Cancelar
+                 </button>
+               </div>`
+            : '<span style="color:var(--muted);font-size:12px;">&mdash;</span>';
+
+        return `<tr>
+            <td style="font-weight:600;color:var(--primary);">${codigo}</td>
+            <td>${fecha}</td>
+            <td>${hora}</td>
+            <td>${medico}</td>
+            <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;">${motivo}</td>
+            <td>${badge(a.status)}</td>
+            <td>${botones}</td>
+        </tr>`;
+    }).join('');
+}
+
+// ================================================================
+// Modal Nueva Cita
+// ================================================================
+function abrirModalNuevaCita() {
+    document.getElementById('nMedico').value = '';
+    document.getElementById('nFecha').value  = new Date().toISOString().slice(0,10);
+    document.getElementById('nHora').value   = '';
+    document.getElementById('nMotivo').value = '';
+    document.querySelectorAll('#overlayNueva .invalid').forEach(el => el.classList.remove('invalid'));
+    document.getElementById('overlayNueva').classList.add('active');
+}
+
+async function agendarCita() {
+    const medico = document.getElementById('nMedico');
+    const fecha  = document.getElementById('nFecha');
+    const hora   = document.getElementById('nHora');
+    const motivo = document.getElementById('nMotivo');
+
+    let valido = true;
+    [medico, fecha, hora, motivo].forEach(el => {
+        const vacio = !el.value.trim();
+        el.classList.toggle('invalid', vacio);
+        if (vacio) valido = false;
+    });
+    if (!valido) { showToast('Complete todos los campos obligatorios.', 'error'); return; }
+
+    // Validar que sea en el futuro (al menos con algo de margen)
+    const datetime = `${fecha.value}T${hora.value}:00`;
+    if (new Date(datetime) <= new Date()) {
+        showToast('Seleccione una fecha y hora futura.', 'error'); return;
+    }
+
+    const btn = document.getElementById('btnAgendar');
+    btn.innerHTML = '<span class="spinner"></span> Agendando...';
+    btn.disabled  = true;
+
+    try {
+        const res = await api.bookAppointment(medico.value, datetime, motivo.value.trim());
+        if (res.id) {
+            showToast('Cita agendada correctamente.', 'success');
+            cerrarModal('overlayNueva');
+            await cargarCitas();
+        } else {
+            showToast('Error: ' + (res.detail || 'Error desconocido.'), 'error');
+        }
+    } catch {
+        showToast('Error de conexi\u00f3n.', 'error');
+    } finally {
+        btn.innerHTML = 'Agendar cita';
+        btn.disabled  = false;
+    }
+}
+
+// ================================================================
+// Cancelar cita
+// ================================================================
+async function cancelarCita(id) {
+    const cita   = citasData.find(c => c.id === id);
+    const codigo = `ATN-${String(id).padStart(4,'0')}`;
+    if (!confirm(`\u00bfDesea cancelar la cita ${codigo}?\n\nEsta acci\u00f3n no se puede deshacer.`)) return;
+
+    try {
+        const res = await api.updateAppointment(id, 'cancelled', null);
+        if (res.id) {
+            showToast('Cita cancelada.', 'success');
+            await cargarCitas();
+        } else {
+            showToast('Error: ' + (res.detail || ''), 'error');
+        }
+    } catch {
+        showToast('Error de conexi\u00f3n.', 'error');
+    }
+}
+
+// ================================================================
+// Reagendar cita
+// ================================================================
+function abrirReagendar(id) {
+    reagendandoId = id;
+    const cita   = citasData.find(c => c.id === id);
+    const dt     = cita ? new Date(cita.appointment_datetime) : new Date();
+    document.getElementById('rFecha').value = dt.toISOString().slice(0,10);
+    document.getElementById('rHora').value  = dt.toTimeString().slice(0,5);
+    document.querySelectorAll('#overlayReagendar .invalid').forEach(el => el.classList.remove('invalid'));
+    document.getElementById('overlayReagendar').classList.add('active');
+}
+
+async function confirmarReagendar() {
+    const fecha = document.getElementById('rFecha');
+    const hora  = document.getElementById('rHora');
+
+    let valido = true;
+    [fecha, hora].forEach(el => {
+        const vacio = !el.value;
+        el.classList.toggle('invalid', vacio);
+        if (vacio) valido = false;
+    });
+    if (!valido) { showToast('Seleccione fecha y hora.', 'error'); return; }
+
+    const nuevaDt = `${fecha.value}T${hora.value}:00`;
+    if (new Date(nuevaDt) <= new Date()) {
+        showToast('Seleccione una fecha y hora futura.', 'error'); return;
+    }
+
+    const btn = document.getElementById('btnReagendar');
+    btn.innerHTML = '<span class="spinner"></span> Reagendando...';
+    btn.disabled  = true;
+
+    try {
+        const res = await api.rescheduleAppointment(reagendandoId, nuevaDt);
+        if (res.id) {
+            showToast('Cita reagendada correctamente.', 'success');
+            cerrarModal('overlayReagendar');
+            await cargarCitas();
+        } else {
+            showToast('Error: ' + (res.detail || ''), 'error');
+        }
+    } catch {
+        showToast('Error de conexi\u00f3n.', 'error');
+    } finally {
+        btn.innerHTML = 'Confirmar reagenda';
+        btn.disabled  = false;
+    }
+}
+
+// ================================================================
+// Utilidades
+// ================================================================
+function mostrarPantalla(id) {
+    ['loginScreen','verifyScreen'].forEach(s => {
+        document.getElementById(s).style.display = s === id ? 'flex' : 'none';
+    });
+}
+
+function cerrarModal(id) {
+    document.getElementById(id).classList.remove('active');
+}
+document.querySelectorAll('.modal-overlay').forEach(o => {
+    o.addEventListener('click', e => { if (e.target === o) cerrarModal(o.id); });
+});
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape')
+        document.querySelectorAll('.modal-overlay.active').forEach(o => cerrarModal(o.id));
+});
+
+function alerta(screenId, msg, tipo = 'error') {
+    const ids = { loginScreen: 'alertLogin', verifyScreen: 'alertVerify' };
+    const el  = document.getElementById(ids[screenId]);
+    if (!el) return;
+    el.textContent = msg;
+    el.className   = `alert ${tipo} show`;
+}
+function ocultarAlerta(screenId) {
+    const ids = { loginScreen: 'alertLogin', verifyScreen: 'alertVerify' };
+    const el  = document.getElementById(ids[screenId]);
+    if (el) el.className = 'alert';
+}
+
+let _toastT;
+function showToast(msg, tipo = 'info') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className   = `toast show ${tipo}`;
+    clearTimeout(_toastT);
+    _toastT = setTimeout(() => t.classList.remove('show'), 3800);
+}
+
+// ================================================================
+// Arranque: si ya tiene token válido de paciente, ir directo al portal
+// ================================================================
+(function() {
+    const token = localStorage.getItem('token');
+    if (token) {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const exp     = payload.exp * 1000;
+            if (payload.role === 'patient' && Date.now() < exp) {
+                mostrarPortal();
+                return;
+            }
+        } catch {}
+        localStorage.removeItem('token');
+    }
+})();
+</script>
+</body>
+</html>
