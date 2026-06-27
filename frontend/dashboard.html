@@ -1319,8 +1319,8 @@ async function guardarAtencion() {
                 'success'
             );
             cerrar('overlayAtencion');
-            // Al crear, cambiar filtro a "Todas" para que siempre aparezca la nueva atención
-            if (!editandoId) setFiltroFecha('todas');
+            // Cambiar a "Todas" para que el resultado siempre sea visible
+            setFiltroFecha('todas');
             await cargarAtenciones();
         } else {
             showToast('Error: ' + (res.detail || 'Respuesta inesperada del servidor.'), 'error');

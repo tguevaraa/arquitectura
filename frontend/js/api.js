@@ -1,5 +1,14 @@
 const API_URL = "http://127.0.0.1:8000";
 
+function _handleResponse(response, data) {
+    if (response.status === 401) {
+        localStorage.removeItem("token");
+        alert("Tu sesión ha expirado. Por favor inicia sesión nuevamente.");
+        window.location.href = "inicio.html";
+    }
+    return data;
+}
+
 const api = {
     async register(email, password, full_name, role = "patient") {
         const response = await fetch(`${API_URL}/auth/register`, {
@@ -49,6 +58,7 @@ const api = {
     async bookAppointmentForPatient(doctorId, datetime, notes, patientId) {
         const body = { doctor_id: parseInt(doctorId), appointment_datetime: datetime, notes };
         if (patientId) body.patient_id = parseInt(patientId);
+        console.log('[POST] /appointments/', body);
         const response = await fetch(`${API_URL}/appointments/`, {
             method: "POST",
             headers: {
@@ -57,20 +67,25 @@ const api = {
             },
             body: JSON.stringify(body)
         });
-        return response.json();
+        const data = await response.json();
+        console.log('[POST] respuesta HTTP', response.status, data);
+        return _handleResponse(response, data);
     },
 
     async getAppointments() {
         const response = await fetch(`${API_URL}/appointments/`, {
             headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
         });
-        return response.json();
+        const data = await response.json();
+        console.log('[GET] /appointments/ →', response.status, Array.isArray(data) ? data.length + ' citas' : data);
+        return data;
     },
 
     async updateAppointment(appointmentId, status, notes) {
         const body = {};
         if (status !== null && status !== undefined) body.status = status;
         if (notes  !== null && notes  !== undefined) body.notes  = notes;
+        console.log('[PATCH] /appointments/' + appointmentId, body);
         const response = await fetch(`${API_URL}/appointments/${appointmentId}`, {
             method: "PATCH",
             headers: {
@@ -79,7 +94,9 @@ const api = {
             },
             body: JSON.stringify(body)
         });
-        return response.json();
+        const data = await response.json();
+        console.log('[PATCH] respuesta HTTP', response.status, data);
+        return _handleResponse(response, data);
     },
 
     async patientLogin(email, password) {
