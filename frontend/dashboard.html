@@ -1254,7 +1254,9 @@ function abrirModalNueva() {
     editandoId = null;
     document.getElementById('tituloModal').textContent = 'Nueva Atenci\u00f3n';
     document.getElementById('formAtencion').reset();
-    document.getElementById('fFecha').value = new Date().toISOString().slice(0, 10);
+    const _hoy = new Date();
+    document.getElementById('fFecha').value =
+        `${_hoy.getFullYear()}-${String(_hoy.getMonth()+1).padStart(2,'0')}-${String(_hoy.getDate()).padStart(2,'0')}`;
     document.querySelectorAll('#formAtencion .invalid').forEach(el => el.classList.remove('invalid'));
     // Mostrar selector de paciente
     document.getElementById('fPaciente').closest('.form-group.span2').style.display = '';
