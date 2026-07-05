@@ -1,0 +1,11 @@
+**/__pycache__
+**/*.pyc
+**/*.pyo
+.pytest_cache
+tests/
+.env
+run.py
+create_admin.py
+guion_exposicion.md
+DESIGN.md
+INSTRUCTIONS.md
