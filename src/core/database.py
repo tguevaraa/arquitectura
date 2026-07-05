@@ -2,11 +2,18 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.pool import NullPool
 from src.core.config import settings
+import ssl
+
+# SSL requerido para conexiones públicas a Railway
+_ssl_ctx = ssl.create_default_context()
+_ssl_ctx.check_hostname = False
+_ssl_ctx.verify_mode = ssl.CERT_NONE
 
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=False,
-    poolclass=NullPool,   # Serverless: nueva conexión por request, sin pool persistente
+    poolclass=NullPool,
+    connect_args={"ssl": _ssl_ctx},
 )
 
 SessionLocal = async_sessionmaker(

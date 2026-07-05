@@ -7,14 +7,21 @@ from src.api import patients
 from src.core.database import Base, engine
 import src.models  # noqa: F401
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 FRONTEND_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Base de datos inicializada correctamente.")
+    except Exception as e:
+        logger.error(f"Error al inicializar la base de datos: {e}")
     yield
 
 
